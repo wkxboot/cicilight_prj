@@ -54,8 +54,8 @@
 #define  PRESSER_UNPRESS_MSG                             2
 #define  COMPRESSOR_OPEN_MSG                             1
 #define  COMPRESSOR_CLOSE_MSG                            2
-#define  SERVO1_ANGLE_OPEN_MSG                           70//角度=127
-#define  SERVO1_ANGLE_CLOSE_MSG                          110//角度=167
+#define  SERVO1_ANGLE_OPEN_MSG                           115//时间=177
+#define  SERVO1_ANGLE_CLOSE_MSG                          142//时间=207
 #define  SERVO2_ANGLE_0_MSG                              0
 #define  SERVO2_ANGLE_20_MSG                             20
 #define  SERVO2_ANGLE_90_MSG                             90
@@ -123,7 +123,7 @@
 #define  OC_SCALE                                         10//运放比例
 #define  RES_VALUE                                        5 //单位0.01欧姆
 #define  ADC_24V_OC_THRESHOLD_mAMPERE                     6000//单位mA
-#define  ADC_PRESSER_OC_THRESHOLD_mAMPERE                 1500//单位mA
+#define  ADC_PRESSER_OC_THRESHOLD_mAMPERE                 1300//单位mA，堵转实测1300mA
 #define  ADC_OH_DOOR_OC_THRESHOLD_mAMPERE                 4000//单位mA
 
 #define  ADC_BEMF_DIV                                     8

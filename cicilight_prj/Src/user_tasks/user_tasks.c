@@ -767,7 +767,7 @@ static void presser_task(void const * argument)
   APP_LOG_INFO("开始压杯！\r\n");
   }
  }
- 
+ //确定压杯电机当前的位置
  if(presser.active==JUICE_TRUE)
  {
   if(BSP_is_cup_presser_in_top_pos()==JUICE_FALSE && BSP_is_cup_presser_in_bot_pos()==JUICE_FALSE && presser.cur_pos!=MID_POS)
@@ -808,7 +808,7 @@ static void presser_task(void const * argument)
   continue;
  }
   
-  
+ //如果没有到达目标位置
  if(presser.cur_pos!=presser.tar_pos)
  {
   if(presser.tar_pos==TOP_POS && presser.dir!=POSITIVE_DIR)
@@ -824,7 +824,7 @@ static void presser_task(void const * argument)
    BSP_press_motor_pwr_on_negative();
   } 
  }
- else if(presser.cur_pos==presser.tar_pos && presser.dir!=NULL_DIR)
+ else //如果到达目标位置
  {
    presser.dir=NULL_DIR;
    presser.run_time=0;
@@ -1033,7 +1033,7 @@ static void adc_task(void const * argument)
  adc_timeout+=ADC_TASK_RUN_INTERVAL_VALUE;
  adc_times++;
  }
- APP_LOG_INFO("ADC取样时间：%d，取样次数：%d.\r\n",adc_timeout,adc_times);
+ APP_LOG_INFO("ADC取样时间：%d ms，取样次数：%d.\r\n",adc_timeout,adc_times);
  for(uint8_t i=0;i<ADC_CNT;i++)
  {
  adc_average[i]=adc_cusum[i]/adc_times; 
