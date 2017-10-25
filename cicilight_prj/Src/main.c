@@ -53,6 +53,7 @@
 #include "dma.h"
 #include "spi.h"
 #include "tim.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
@@ -110,6 +111,7 @@ int main(void)
   MX_TIM2_Init();
   MX_SPI1_Init();
   MX_ADC1_Init();
+  MX_USART3_UART_Init();
 
   /* USER CODE BEGIN 2 */
 

@@ -1,9 +1,7 @@
-/* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
 #include "task.h"
 #include "cmsis_os.h"
-
-/* USER CODE BEGIN Includes */     
+   
 #include "gpio.h"
 #include "tim.h"
 #include "rgb_led.h"
@@ -36,18 +34,19 @@ static uint32_t strip_color(uint8_t r, uint8_t g, uint8_t b)
 // The colours are a transition r - g - b - back to r.
 static uint32_t strip_wheel(uint8_t WheelPos) 
 {
-  if(WheelPos > 83)
-    WheelPos-=83;
-  WheelPos = 83 - WheelPos;
-  if(WheelPos < 28) {
-    return strip_color(255 - WheelPos * 9,0 , WheelPos * 9);
+  WheelPos = (RGB_LED_NUM_MAX-1) - WheelPos;
+  
+  if(WheelPos < (RGB_LED_NUM_MAX/3))
+  {
+    return strip_color(255 - WheelPos * (255/(RGB_LED_NUM_MAX/3)),0 , WheelPos * (255/(RGB_LED_NUM_MAX/3)));
   }
-  if(WheelPos < 56) {
-    WheelPos -= 28;
-    return strip_color(0, WheelPos * 9, 255 - WheelPos * 9);
+  if(WheelPos < (RGB_LED_NUM_MAX/3)*2)
+  {
+    WheelPos -= (RGB_LED_NUM_MAX/3);
+    return strip_color(0, WheelPos * (255/(RGB_LED_NUM_MAX/3)), 255 - WheelPos * (255/(RGB_LED_NUM_MAX/3)));
   }
-  WheelPos -= 56;
-  return strip_color(WheelPos * 9, 255 - WheelPos * 9, 0);
+  WheelPos -= (RGB_LED_NUM_MAX/3)*2;
+  return strip_color(WheelPos * (255/(RGB_LED_NUM_MAX/3)), 255 - WheelPos * (255/(RGB_LED_NUM_MAX/3)), 0);
 }
 /*
 // Input a value 0 to 255 to get a color value.
@@ -109,15 +108,15 @@ static void strip_show()
 {
   uint16_t i, j;
 
-   for(j=0; j<84; j++)
+   for(j=0; j<RGB_LED_NUM_MAX; j++)
    {
-    APP_LOG_DEBUG("start time:%d\r\n",osKernelSysTick());
+    //APP_LOG_DEBUG("start time:%d\r\n",osKernelSysTick());
     for(i=0; i<RGB_LED_NUM_MAX; i++)
     {
       strip_set_pixel_color(i, strip_wheel((i+j)),255);
     }
     strip_show();
-    APP_LOG_DEBUG("end time:%d\r\n",osKernelSysTick());
+    //APP_LOG_DEBUG("end time:%d\r\n",osKernelSysTick());
     osDelay(wait_ms);
   }
 }
@@ -130,3 +129,59 @@ void single_color(uint32_t rgb,uint8_t brightness)
   } 
   strip_show();
 }
+
+//瀑布覆盖颜色
+void overwrite_color(uint32_t rgb,uint8_t pos,uint8_t brightness)
+{ 
+ strip_set_pixel_color(pos,rgb,brightness);
+ strip_show();
+}
+
+/*
+
+ void juicing_color(uint16_t wait_time)
+{
+ for(uint8_t i=0;i<JUICING_BLINK_CNT;i++)
+ {
+ single_color(JUICING_YELLOW_COLOR,255);//黄色rgb=255 255 0
+ osDelay(JUICING_BLINK_DELAY_TIME);
+ single_color(JUICING_BLACK_COLOR,255);//黑色
+ osDelay(JUICING_BLINK_DELAY_TIME);
+ }
+ single_color(JUICING_BLACK_COLOR,255);//黑色
+ for(uint8_t i=0;i<JUICING_REPEAT_CNT;i++)
+ {
+ overwrite_color(JUICING_WHITE_COLOR,RGB_LED_SECTION1_POS,RGB_LED_SECTION1_CNT,wait_time,255);
+ osDelay(JUICING_SECTION_DELAY_TIME);
+ overwrite_color(JUICING_GREEN_COLOR,RGB_LED_SECTION2_POS,RGB_LED_SECTION2_CNT,wait_time,255);
+ osDelay(JUICING_SECTION_DELAY_TIME);
+ overwrite_color(JUICING_BLUE_COLOR,RGB_LED_SECTION3_POS,RGB_LED_SECTION3_CNT,wait_time,255);
+ osDelay(JUICING_SECTION_DELAY_TIME);
+ 
+ 
+ overwrite_color(JUICING_YELLOW_COLOR,RGB_LED_SECTION1_POS,RGB_LED_SECTION1_CNT,wait_time,255);
+ osDelay(JUICING_SECTION_DELAY_TIME);
+ overwrite_color(JUICING_WHITE_COLOR,RGB_LED_SECTION2_POS,RGB_LED_SECTION2_CNT,wait_time,255);
+ osDelay(JUICING_SECTION_DELAY_TIME);
+ overwrite_color(JUICING_GREEN_COLOR,RGB_LED_SECTION3_POS,RGB_LED_SECTION3_CNT,wait_time,255);
+ osDelay(JUICING_SECTION_DELAY_TIME);
+ 
+ 
+ overwrite_color(JUICING_BLUE_COLOR,RGB_LED_SECTION1_POS,RGB_LED_SECTION1_CNT,wait_time,255);
+ osDelay(JUICING_SECTION_DELAY_TIME);
+ overwrite_color(JUICING_YELLOW_COLOR,RGB_LED_SECTION2_POS,RGB_LED_SECTION2_CNT,wait_time,255);
+ osDelay(JUICING_SECTION_DELAY_TIME);
+ overwrite_color(JUICING_WHITE_COLOR,RGB_LED_SECTION3_POS,RGB_LED_SECTION3_CNT,wait_time,255);
+ osDelay(JUICING_SECTION_DELAY_TIME);
+ 
+ 
+ overwrite_color(JUICING_GREEN_COLOR,RGB_LED_SECTION1_POS,RGB_LED_SECTION1_CNT,wait_time,255);
+ osDelay(JUICING_SECTION_DELAY_TIME);
+ overwrite_color(JUICING_BLUE_COLOR,RGB_LED_SECTION2_POS,RGB_LED_SECTION2_CNT,wait_time,255);
+ osDelay(JUICING_SECTION_DELAY_TIME);
+ overwrite_color(JUICING_YELLOW_COLOR,RGB_LED_SECTION3_POS,RGB_LED_SECTION3_CNT,wait_time,255);
+ osDelay(JUICING_SECTION_DELAY_TIME);
+}
+
+}
+*/

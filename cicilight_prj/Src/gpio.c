@@ -104,13 +104,13 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PEPin PEPin */
-  GPIO_InitStruct.Pin = BSP_COLUMN_STEP_MOTOR_RST_POS_Pin|BSP_PS_6_POS_Pin;
+  GPIO_InitStruct.Pin = BSP_COLUMN_STEP_MOTOR_RST_POS_Pin|BSP_CUP_POS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PCPin PCPin PCPin */
-  GPIO_InitStruct.Pin = BSP_ROW_STEP_MOTOR_RST_POS_Pin|BSP_MS_3_POS_Pin|BSP_MS_4_POS_Pin;
+  GPIO_InitStruct.Pin = BSP_ROW_STEP_MOTOR_RST_POS_Pin|BSP_CUP_PRESS_OK_POS_Pin|BSP_CUP_PRESSER_IN_BOT_POS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -118,21 +118,15 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pins : PFPin PFPin PFPin PFPin 
                            PFPin PFPin PFPin PFPin 
                            PFPin */
-  GPIO_InitStruct.Pin = BSP_MS_5_POS_Pin|BSP_MS_6_POS_Pin|BSP_MS_7_POS_Pin|BSP_MS_8_POS_Pin 
-                          |BSP_MS_9_POS_Pin|BSP_MS_10_POS_Pin|BSP_PS_1_POS_Pin|BSP_PS_2_POS_Pin 
-                          |BSP_PS_3_POS_Pin;
+  GPIO_InitStruct.Pin = BSP_CUP_PRESSER_IN_TOP_POS_Pin|BSP_OH_DOOR_CLAMP_HAND_POS_Pin|BSP_MS_7_POS_Pin|BSP_MS_8_POS_Pin 
+                          |BSP_MS_9_POS_Pin|BSP_MS_10_POS_Pin|BSP_OH_DOOR_HAND_DETECT_POS_Pin|BSP_OH_DOOR_IN_TOP_POS_Pin 
+                          |BSP_OH_DOOR_IN_BOT_POS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = BSP_PRESS_MOTOR_OC_SENSOR_POS_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(BSP_PRESS_MOTOR_OC_SENSOR_POS_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pins : PGPin PGPin */
-  GPIO_InitStruct.Pin = BSP_PS_4_POS_Pin|BSP_PS_5_POS_Pin;
+  GPIO_InitStruct.Pin = BSP_ROW_POS_SENSOR_Pin|BSP_COLUMN_POS_SENSOR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);

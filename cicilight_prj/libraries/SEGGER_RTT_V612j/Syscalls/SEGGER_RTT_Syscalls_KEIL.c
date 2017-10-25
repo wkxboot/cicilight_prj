@@ -1,25 +1,40 @@
 /*********************************************************************
-*               SEGGER MICROCONTROLLER GmbH & Co. KG                 *
-*       Solutions for real time microcontroller applications         *
+*                SEGGER Microcontroller GmbH & Co. KG                *
+*                        The Embedded Experts                        *
 **********************************************************************
 *                                                                    *
-*       (c) 2014 - 2015  SEGGER Microcontroller GmbH & Co. KG        *
+*       (c) 2014 - 2017  SEGGER Microcontroller GmbH & Co. KG        *
 *                                                                    *
 *       www.segger.com     Support: support@segger.com               *
 *                                                                    *
 **********************************************************************
 *                                                                    *
+*       SEGGER RTT * Real Time Transfer for embedded targets         *
+*                                                                    *
+**********************************************************************
+*                                                                    *
 * All rights reserved.                                               *
 *                                                                    *
-* * This software may in its unmodified form be freely redistributed *
-*   in source form.                                                  *
-* * The source code may be modified, provided the source code        *
-*   retains the above copyright notice, this list of conditions and  *
-*   the following disclaimer.                                        *
-* * Modified versions of this software in source or linkable form    *
-*   may not be distributed without prior consent of SEGGER.          *
-* * This software may only be used for communication with SEGGER     *
-*   J-Link debug probes.                                             *
+* SEGGER strongly recommends to not make any changes                 *
+* to or modify the source code of this software in order to stay     *
+* compatible with the RTT protocol and J-Link.                       *
+*                                                                    *
+* Redistribution and use in source and binary forms, with or         *
+* without modification, are permitted provided that the following    *
+* conditions are met:                                                *
+*                                                                    *
+* o Redistributions of source code must retain the above copyright   *
+*   notice, this list of conditions and the following disclaimer.    *
+*                                                                    *
+* o Redistributions in binary form must reproduce the above          *
+*   copyright notice, this list of conditions and the following      *
+*   disclaimer in the documentation and/or other materials provided  *
+*   with the distribution.                                           *
+*                                                                    *
+* o Neither the name of SEGGER Microcontroller GmbH & Co. KG         *
+*   nor the names of its contributors may be used to endorse or      *
+*   promote products derived from this software without specific     *
+*   prior written permission.                                        *
 *                                                                    *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND             *
 * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,        *
@@ -36,14 +51,18 @@
 * DAMAGE.                                                            *
 *                                                                    *
 **********************************************************************
---------- END-OF-HEADER --------------------------------------------
+*                                                                    *
+*       RTT version: 6.12j                                           *
+*                                                                    *
+**********************************************************************
+---------------------------END-OF-HEADER------------------------------
 File    : RTT_Syscalls_KEIL.c
 Purpose : Retargeting module for KEIL MDK-CM3.
           Low-level functions for using printf() via RTT
+Revision: $Rev: 4351 $
 ----------------------------------------------------------------------
 */
-
-#if defined(NRF_LOG_USES_RTT) && NRF_LOG_USES_RTT == 1
+#ifdef __CC_ARM
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,9 +77,8 @@ Purpose : Retargeting module for KEIL MDK-CM3.
 *
 **********************************************************************
 */
-#ifndef NRF_LOG_USES_RTT
 #pragma import(__use_no_semihosting)
-#endif
+
 #ifdef _MICROLIB
   #pragma import(__use_full_stdio)
 #endif
@@ -84,7 +102,7 @@ Purpose : Retargeting module for KEIL MDK-CM3.
 *
 **********************************************************************
 */
-const char __stdin_name[]  = "STDIN";
+//const char __stdin_name[]  = "STDIN";
 const char __stdout_name[] = "STDOUT";
 const char __stderr_name[] = "STDERR";
 
@@ -104,7 +122,7 @@ const char __stderr_name[] = "STDERR";
 *
 *  Parameters:
 *    c    - character to output
-*
+*  
 */
 void _ttywrch(int c) {
   fputc(c, stdout); // stdout
@@ -121,13 +139,14 @@ void _ttywrch(int c) {
 *  Parameters:
 *    sName        - sName of the device/file to open
 *    OpenMode    - This parameter is currently ignored
-*
+*  
 *  Return value:
-*    != 0     - Handle to the object to open, otherwise
+*    != 0     - Handle to the object to open, otherwise 
 *    == 0     -"device" is not handled by this module
 *
 */
 FILEHANDLE _sys_open(const char * sName, int OpenMode) {
+  (void)OpenMode;
   // Register standard Input Output devices.
   if (strcmp(sName, __stdout_name) == 0) {
     return (STDOUT);
@@ -146,12 +165,13 @@ FILEHANDLE _sys_open(const char * sName, int OpenMode) {
 *
 *  Parameters:
 *    hFile    - Handle to a file opened via _sys_open
-*
+*  
 *  Return value:
 *    0     - device/file closed
 *
 */
 int _sys_close(FILEHANDLE hFile) {
+  (void)hFile;
   return 0;  // Not implemented
 }
 
@@ -168,7 +188,7 @@ int _sys_close(FILEHANDLE hFile) {
 *    pBuffer  - Pointer to the data that shall be written
 *    NumBytes      - Number of bytes to write
 *    Mode     - The Mode that shall be used
-*
+*  
 *  Return value:
 *    Number of bytes *not* written to the file/device
 *
@@ -176,6 +196,7 @@ int _sys_close(FILEHANDLE hFile) {
 int _sys_write(FILEHANDLE hFile, const unsigned char * pBuffer, unsigned NumBytes, int Mode) {
   int r = 0;
 
+  (void)Mode;
   if (hFile == STDOUT) {
     return NumBytes - SEGGER_RTT_Write(0, (const char*)pBuffer, NumBytes);
   }
@@ -195,12 +216,16 @@ int _sys_write(FILEHANDLE hFile, const unsigned char * pBuffer, unsigned NumByte
 *    pBuffer  - Pointer to buffer to store the read data
 *    NumBytes      - Number of bytes to read
 *    Mode     - The Mode that shall be used
-*
+*  
 *  Return value:
 *    Number of bytes read from the file/device
 *
 */
 int _sys_read(FILEHANDLE hFile, unsigned char * pBuffer, unsigned NumBytes, int Mode) {
+  (void)hFile;
+  (void)pBuffer;
+  (void)NumBytes;
+  (void)Mode;
   return (0);  // Not implemented
 }
 
@@ -209,12 +234,12 @@ int _sys_read(FILEHANDLE hFile, unsigned char * pBuffer, unsigned NumBytes, int 
 *       _sys_istty
 *
 *  Function description:
-*    This function shall return whether the opened file
+*    This function shall return whether the opened file 
 *    is a console device or not.
 *
 *  Parameters:
 *    hFile    - Handle to a file opened via _sys_open
-*
+*  
 *  Return value:
 *    1       - Device is     a console
 *    0       - Device is not a console
@@ -236,13 +261,15 @@ int _sys_istty(FILEHANDLE hFile) {
 *
 *  Parameters:
 *    hFile  - Handle to a file opened via _sys_open
-*    Pos    -
-*
+*    Pos    - 
+*  
 *  Return value:
-*    int       -
+*    int       - 
 *
 */
 int _sys_seek(FILEHANDLE hFile, long Pos) {
+  (void)hFile;
+  (void)Pos;
   return (0);  // Not implemented
 }
 
@@ -251,16 +278,17 @@ int _sys_seek(FILEHANDLE hFile, long Pos) {
 *       _sys_ensure
 *
 *  Function description:
-*
+*    
 *
 *  Parameters:
 *    hFile    - Handle to a file opened via _sys_open
-*
+*  
 *  Return value:
-*    int       -
+*    int       - 
 *
 */
 int _sys_ensure(FILEHANDLE hFile) {
+  (void)hFile;
   return (-1);  // Not implemented
 }
 
@@ -273,12 +301,13 @@ int _sys_ensure(FILEHANDLE hFile) {
 *
 *  Parameters:
 *    hFile    - Handle to a file opened via _sys_open
-*
+*  
 *  Return value:
 *    Length of the file
 *
 */
 long _sys_flen(FILEHANDLE hFile) {
+  (void)hFile;
   return (0);  // Not implemented
 }
 
@@ -287,20 +316,23 @@ long _sys_flen(FILEHANDLE hFile) {
 *       _sys_tmpnam
 *
 *  Function description:
-*    This function converts the file number fileno for a temporary
+*    This function converts the file number fileno for a temporary 
 *    file to a unique filename, for example, tmp0001.
 *
 *  Parameters:
 *    pBuffer    - Pointer to a buffer to store the name
 *    FileNum    - file number to convert
 *    MaxLen     - Size of the buffer
-*
+*  
 *  Return value:
 *     1 - Error
-*     0 - Success
+*     0 - Success  
 *
 */
 int _sys_tmpnam(char * pBuffer, int FileNum, unsigned MaxLen) {
+  (void)pBuffer;
+  (void)FileNum;
+  (void)MaxLen;
   return (1);  // Not implemented
 }
 
@@ -314,13 +346,14 @@ int _sys_tmpnam(char * pBuffer, int FileNum, unsigned MaxLen) {
 *  Parameters:
 *    cmd    - Pointer to the command string
 *    len    - Length of the string
-*
+*  
 *  Return value:
 *    == NULL - Command was not successfully executed
 *    == sCmd - Command was passed successfully
 *
 */
 char * _sys_command_string(char * cmd, int len) {
+  (void)len;
   return cmd;  // Not implemented
 }
 
@@ -333,11 +366,13 @@ char * _sys_command_string(char * cmd, int len) {
 *
 *  Parameters:
 *    ReturnCode    - Return code from the main function
-*
+*  
 *
 */
 void _sys_exit(int ReturnCode) {
+  (void)ReturnCode;
   while (1);  // Not implemented
 }
 
-#endif // NRF_LOG_USES_RTT == 1
+#endif
+/*************************** End of file ****************************/

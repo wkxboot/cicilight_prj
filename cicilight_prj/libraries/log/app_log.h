@@ -1,11 +1,13 @@
-#ifndef   APP_LOG_H__
-#define   APP_LOG_H__
-#include "stdio.h"
-#include "stdint.h"
-#include "app_util.h"
-#include "app_log_config.h"
+#ifndef   __APP_LOG_H__
+#define   __APP_LOG_H__
 
-#define APP_LOG_OFF                0U
+
+#include "app_log_config.h"
+#include "SEGGER_RTT.h"
+#include "app_util.h"
+
+
+#define APP_LOG_LEVEL_OFF          0U
 #define APP_LOG_LEVEL_ERROR        1U
 #define APP_LOG_LEVEL_WARNING      2U
 #define APP_LOG_LEVEL_INFO         3U
@@ -32,20 +34,21 @@
 #define APP_LOG_COLOR_8            APP_LOG_COLOR_CODE_WHITE
 
 #define APP_LOG_COLOR_DECODE(N)   CONCAT_2(APP_LOG_COLOR_, N)
-#if APP_LOG_USES_COLORS > 0
+
+#if APP_LOG_USE_COLORS  >  0
 #define APP_LOG_ERROR_COLOR_CODE   APP_LOG_COLOR_DECODE(APP_LOG_ERROR_COLOR)
 #define APP_LOG_WARNING_COLOR_CODE APP_LOG_COLOR_DECODE(APP_LOG_WARNING_COLOR)
 #define APP_LOG_INFO_COLOR_CODE    APP_LOG_COLOR_DECODE(APP_LOG_INFO_COLOR)
 #define APP_LOG_DEBUG_COLOR_CODE   APP_LOG_COLOR_DECODE(APP_LOG_DEBUG_COLOR)
-#else // APP_LOG_USES_COLORS
+#else 
 #define APP_LOG_ERROR_COLOR_CODE
 #define APP_LOG_WARNING_COLOR_CODE
 #define APP_LOG_INFO_COLOR_CODE
 #define APP_LOG_DEBUG_COLOR_CODE
-#endif // APP_LOG_USES_COLORS
+#endif 
 
 
-#if  defined(APP_LOG_USE_TIMESTAMP) && (APP_LOG_USE_TIMESTAMP > 0)
+#if APP_LOG_USE_TIMESTAMP  >  0
 #define APP_LOG_TIMESTAMP_STRING    "[%8d]"
 #define APP_LOG_TIMESTAMP_VALUE     APP_TIMESTAMP()
 #else
@@ -53,7 +56,7 @@
 #define APP_LOG_TIMESTAMP_VALUE      0
 #endif
 
-#define APP_LOG_BREAK      " "
+#define APP_LOG_BREAK      ""
 
 #define LOG_ERROR_PREFIX   APP_LOG_ERROR_COLOR_CODE   APP_LOG_TIMESTAMP_STRING APP_LOG_MODULE_NAME APP_LOG_BREAK "[ERROR]"
 #define LOG_WARNING_PREFIX APP_LOG_WARNING_COLOR_CODE APP_LOG_TIMESTAMP_STRING APP_LOG_MODULE_NAME APP_LOG_BREAK "[WARNING]"
@@ -62,17 +65,18 @@
 
 
 
-#if  APP_LOG_ENABLED > 0
+#if APP_LOG_ENABLED > 0
 
-#if  defined(APP_LOG_USE_UART) && (APP_LOG_USE_UART > 0)
-#define  APP_LOG_STD_OUT(format,arg...)     printf(format,APP_LOG_TIMESTAMP_VALUE,##arg)
-#define  APP_LOG_INIT()                     APP_UART_INIT()
-#elif defined(APP_LOG_USE_SEGGER_RTT) && (APP_LOG_USE_SEGGER_RTT > 0)
+#if APP_LOG_USE_SEGGER_RTT > 0
 #define  APP_LOG_STD_OUT(format,arg...)     SEGGER_RTT_printf(0,format,APP_LOG_TIMESTAMP_VALUE,##arg)
-#define  APP_LOG_INIT()                     SEGGER_RTT_Init()        
+#define  APP_LOG_INIT()                     SEGGER_RTT_Init() 
+
+#elif APP_LOG_USE_UART > 0
+#define  APP_LOG_STD_OUT(format,arg...)     printf(format,APP_LOG_TIMESTAMP_VALUE,##arg)
+#define  APP_LOG_INIT()                     APP_LOG_UART_INIT()    
 
 #else 
-#error "APP_DEBUG_USE_UART and APP_DEBUG_USE_SEGGER_RTT are all false!!!!! "//至少有一个为真
+#error "APP_LOG_ENABLED为真，所以 APP_LOG_USE_UART 和 APP_LOG_USE_SEGGER_RTT 至少有一个为真! "//
 #endif
 
 #define APP_LOG_ERROR(format,arg...)                                                              \
@@ -112,15 +116,11 @@
 
 
 void app_log_init(void);
-void APP_UART_INIT(void);
+#if  APP_LOG_USE_UART > 0
+void APP_LOG_UART_INIT(void);
+#endif
+#if APP_LOG_USE_TIMESTAMP > 0
 uint32_t APP_TIMESTAMP(void);
-/*********************************************************************
-*
-*       RTT printf functions (require SEGGER_RTT_printf.c)
-*
-**********************************************************************
-*/
-int SEGGER_RTT_printf(unsigned BufferIndex, const char * sFormat, ...);
-void         SEGGER_RTT_Init             (void);
+#endif
 
 #endif

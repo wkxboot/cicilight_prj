@@ -71,18 +71,20 @@ __assert( const char *pcFile, const char *pcAssertion, int iLine )
 BOOL
 bMBPIsWithinException( void )
 {
-    BOOL            bMBPIsWithinException = TRUE;
-    unsigned int    uiCPSR;
-    asm volatile    ( "MRS  %0, xPSR":"=r" ( uiCPSR ): );
+  
+    //BOOL            bMBPIsWithinException = TRUE;
+    //unsigned int    uiCPSR;
+    //asm volatile    ( "MRS  %0, xPSR":"=r" ( uiCPSR ): );
 
-    switch ( uiCPSR & 0x000000001F )
-    {
-    case 0x00000010U:          /* User Mode */
-    case 0x0000001FU:          /* System Mode */
-        bMBPIsWithinException = FALSE;
-        break;
-    }
-    return bMBPIsWithinException;
+    //switch ( uiCPSR & 0x000000001F )
+    //{
+    //case 0x00000010U:          /* User Mode */
+    //case 0x0000001FU:          /* System Mode */
+    //    bMBPIsWithinException = FALSE;
+    //    break;
+    //}
+    //return bMBPIsWithinException;
+     return (__get_IPSR()!=0) ;
 }
 
 void

@@ -22,7 +22,9 @@ D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../libraries/
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../libraries/util
 -I
-D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../libraries/segger_rtt
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../libraries/SEGGER_RTT_V612j/RTT
+-I
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../libraries/SEGGER_RTT_V612j/Syscalls
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../Src/user_tasks
 -I
@@ -37,6 +39,10 @@ D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../Middleware
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../Drivers/BSP/components/drv8711
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../Drivers/BSP/components/rgb_led
+-I
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../Drivers/BSP/components/ntc
+-I
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../Drivers/BSP/common
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../Drivers/BSP/cicilight_v1
 -I
@@ -66,7 +72,9 @@ D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\libraries\log
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\libraries\util
 -I
-D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\libraries\segger_rtt
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\libraries\SEGGER_RTT_V612j\RTT
+-I
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\libraries\SEGGER_RTT_V612j\Syscalls
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Src\user_tasks
 -I
@@ -81,6 +89,10 @@ D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Middlewares\Third_P
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Drivers\BSP\components\drv8711
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Drivers\BSP\components\rgb_led
+-I
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Drivers\BSP\components\ntc
+-I
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Drivers\BSP\common
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Drivers\BSP\cicilight_v1
 -I
@@ -346,6 +358,7 @@ C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.0\arm\CMSIS\Include
 -D__EDG_FLOAT128_ENABLING_POSSIBLE=0
 -DUSE_HAL_DRIVER=1
 -DSTM32F103xE=1
+-DIO_CHECK_TASK_ENABLE=1
 -D_DLIB_CONFIG_FILE_HEADER_NAME=u8"C:\\Program Files (x86)\\IAR Systems\\Embedded Workbench 8.0\\arm\\INC\\c\\DLib_Config_Full.h"
 -D_DLIB_CONFIG_FILE_STRING=u8"C:\\Program Files (x86)\\IAR Systems\\Embedded Workbench 8.0\\arm\\INC\\c\\DLib_Config_Full.h"
 -D__VERSION__="IAR ANSI C/C++ Compiler V8.11.2.13589/W32 for ARM"

@@ -1,53 +1,9 @@
 #ifndef  __JJDK_ZK_GZ1_H__
 #define  __JJDK_ZK_GZ1_H__
 
-#define  BSP_ROW_STEP_MOTOR_LEN_PER_CIRCLE                 60 //60mm 转一圈长度
-#define  BSP_COLUMN_STEP_MOTOR_LEN_PER_CIRCLE              60 //60mm 转一圈长度
+#define  BSP_TRUE                                         0
+#define  BSP_FALSE                                        1
 
-
-#define  BSP_ROW_STEP_MOTOR_STEPS_PER_CIRCLE              12800   //每圈步数
-#define  BSP_COLUMN_STEP_MOTOR_STEPS_PER_CIRCLE           (64*200)//每圈步数
-
-#define  BSP_ROW_STEP_MOTOR_STEPS_PER_MM                  (BSP_ROW_STEP_MOTOR_STEPS_PER_CIRCLE/BSP_ROW_STEP_MOTOR_LEN_PER_CIRCLE )     //每毫米步数              
-#define  BSP_COLUMN_STEP_MOTOR_STEPS_PER_MM               (BSP_COLUMN_STEP_MOTOR_STEPS_PER_CIRCLE/BSP_COLUMN_STEP_MOTOR_LEN_PER_CIRCLE)//每毫米步数        
-
-#define  BSP_LEN_PER_ROW                                   250//mm 行距
-#define  BSP_LEN_PER_COLUMN                                180//mm 列距
-
-#define  BSP_CUP_HIGHT                                     (100-55)//mm 杯子露出高度-(抓取位置高度,从上到下)
-#define  BSP_PUT_UP_CUP_LEN                                100//75//mm 杯子提起高度90
-#define  BSP_PUT_DOWN_CUP_LEN                              100//75//mm 杯子下放高度
-#define  BSP_GRABBER_HIGHT                                 365//mm 机械手高度
-#define  BSP_GRABBER_LEN                                   50//mm 机械手长度（只算底座）
-#define  BSP_ROW_LEN_BETWEEN_RST_AND_ROW1                  400//mm 第一排到复位点距离     
-#define  BSP_COLUMN_LEN_BETWEEN_RST_AND_COLUMN1            240//55 //mm第一列到复位点距离
-#define  BSP_COLUMN_OFFSET_LEN_BETWEEN_GRABBER_AND_COLUMN  40//每一列中心点和机械手之间的偏移值(70度对应偏移40mm)
-
-
-
-#define  BSP_STEPS_PER_ROW                                (BSP_LEN_PER_ROW*BSP_ROW_STEP_MOTOR_STEPS_PER_MM)
-#define  BSP_STEPS_PER_COLUMN                             (BSP_LEN_PER_COLUMN*BSP_COLUMN_STEP_MOTOR_STEPS_PER_MM)
-
-#define  BSP_PUT_UP_CUP_STEPS                             (BSP_PUT_UP_CUP_LEN*BSP_ROW_STEP_MOTOR_STEPS_PER_MM)
-#define  BSP_PUT_DOWN_CUP_STEPS                           (BSP_PUT_DOWN_CUP_LEN*BSP_ROW_STEP_MOTOR_STEPS_PER_MM)
-
-
-#define  BSP_ROW_STEPS_BETWEEN_RST_AND_ROW1               ((BSP_ROW_LEN_BETWEEN_RST_AND_ROW1-BSP_GRABBER_HIGHT+BSP_CUP_HIGHT+BSP_PUT_UP_CUP_LEN)*BSP_ROW_STEP_MOTOR_STEPS_PER_MM)
-#define  BSP_COLUMN_STEPS_BETWEEN_RST_AND_COLUMN1         ((BSP_COLUMN_LEN_BETWEEN_RST_AND_COLUMN1-BSP_COLUMN_OFFSET_LEN_BETWEEN_GRABBER_AND_COLUMN-BSP_GRABBER_LEN)*BSP_COLUMN_STEP_MOTOR_STEPS_PER_MM)
-
-#define  BSP_BRAKE_RELEASE_TIMEOUT_VALUE                  100
-#define  BSP_RELAY_RELEASE_TIMEOUT_VALUE                  100
-
-
-#define  BSP_ROW_STEP_MOTOR_RST_POS_STEPS                 0xFFFFFFFF
-#define  BSP_COLUMN_STEP_MOTOR_RST_POS_STEPS              0xFFFFFFFF
-
-#define  BSP_TRUE                                         1
-#define  BSP_FALSE                                        0
-
-
-#define  BSP_DIR_POSITIVE                                 1
-#define  BSP_DIR_NEGATIVE                                 2
 
 //行步进电机 86
 #define  BSP_ROW_STEP_MOTOR_BRAKE_ENABLE_PIN_STATE        GPIO_PIN_RESET
@@ -82,16 +38,27 @@
 #define  BSP_PRESS_MOTOR_DIR_POSITIVE_DISABLE_RELAY_PIN_STATE   GPIO_PIN_RESET
 #define  BSP_PRESS_MOTOR_DIR_NEGATIVE_ENABLE_RELAY_PIN_STATE    GPIO_PIN_SET
 #define  BSP_PRESS_MOTOR_DIR_NEGATIVE_DISABLE_RELAY_PIN_STATE   GPIO_PIN_RESET
-
+//果杯检测
+#define  BSP_CUP_PRESS_OK_POS_PIN_STATE                         GPIO_PIN_RESET
+#define  BSP_CUP_IN_SLOT_POS_PIN_STATE                          GPIO_PIN_RESET
+#define  BSP_CUP_PRESSER_IN_BOT_POS_PIN_STATE                   GPIO_PIN_RESET
+#define  BSP_CUP_PRESSER_IN_TOP_POS_PIN_STATE                   GPIO_PIN_RESET
 
 //榨汁电机 
 #define  BSP_JUICING_MOTOR_PWR_ON_PIN_STATE                     GPIO_PIN_SET
 #define  BSP_JUICING_MOTOR_PWR_DWN_PIN_STATE                    GPIO_PIN_RESET
+
+
 //升降门电机
 #define  BSP_OH_DOOR_MOTOR_DIR_POSITIVE_ENABLE_RELAY_PIN_STATE  GPIO_PIN_SET
 #define  BSP_OH_DOOR_MOTOR_DIR_POSITIVE_DISABLE_RELAY_PIN_STATE GPIO_PIN_RESET
 #define  BSP_OH_DOOR_MOTOR_DIR_NEGATIVE_ENABLE_RELAY_PIN_STATE  GPIO_PIN_SET
 #define  BSP_OH_DOOR_MOTOR_DIR_NEGATIVE_DISABLE_RELAY_PIN_STATE GPIO_PIN_RESET
+
+#define  BSP_OH_DOOR_HAND_DETECTED_PIN_STATE                    GPIO_PIN_RESET
+#define  BSP_OH_DOOR_CLAMP_HAND_PIN_STATE                       GPIO_PIN_RESET
+#define  BSP_OH_DOOR_IN_BOT_POS_PIN_STATE                       GPIO_PIN_RESET
+#define  BSP_OH_DOOR_IN_TOP_POS_PIN_STATE                       GPIO_PIN_RESET
 
 //压缩机
 #define  BSP_COMPRESSOR_PWR_ON_PIN_STATE                        GPIO_PIN_SET
@@ -99,51 +66,56 @@
 //环境灯
 #define  BSP_ENVIRONMENT_LAMP_PWR_ON_PIN_STATE                  GPIO_PIN_SET            
 #define  BSP_ENVIRONMENT_LAMP_PWR_DWN_PIN_STATE                 GPIO_PIN_RESET
+//运行灯
+#define  BSP_RUN_LED_TURN_ON_PIN_STATE                          GPIO_PIN_SET
+#define  BSP_RUN_LED_TURN_OFF_PIN_STATE                         GPIO_PIN_RESET
+//微动开关
+#define  BSP_MS_IN_TAR_POS_PIN_STATE                            GPIO_PIN_RESET
+//光电开关
+#define  BSP_PS_IN_TAR_POS_PIN_STATE                            GPIO_PIN_RESET
+//输入端口
+#define  BSP_COLUMN_STEP_MOTOR_FAULT_PIN_STATE                  GPIO_PIN_SET
+#define  BSP_COLUMN_STEP_MOTOR_STALL_PIN_STATE                  GPIO_PIN_SET
+
+//超时
+#define  BSP_RELAY_RELEASE_TIMEOUT_VALUE                        50
+#define  BSP_BRAKE_RELEASE_TIMEOUT_VALUE                        20
+#define  BSP_SENSOR_POS_ROW_TIMEOUT_VALUE                       10
+#define  BSP_SENSOR_POS_COLUMN_TIMEOUT_VALUE                    10
+
+//温度错误
+#define  BSP_ERR_T_VALUE                                        0x7F
+
 
 //微动开关
-#define  BSP_MS_ON_TAR_POS_PIN_STATE                            GPIO_PIN_RESET
+uint8_t BSP_is_row_step_motor_in_rst_pos();
+uint8_t BSP_is_column_step_motor_in_rst_pos();
+uint8_t BSP_is_cup_press_ok();
+uint8_t BSP_is_cup_presser_in_bot_pos();
+uint8_t BSP_is_cup_presser_in_top_pos();
+uint8_t BSP_is_oh_door_clamp_hand();
+uint8_t BSP_is_ms_7_in_tar_pos();
+uint8_t BSP_is_ms_8_in_tar_pos();
+uint8_t BSP_is_ms_9_in_tar_pos();
+uint8_t BSP_is_ms_10_in_tar_pos();
+
 //光电开关
-#define  BSP_PS_ON_TAR_POS_PIN_STATE                            GPIO_PIN_RESET
+uint8_t BSP_is_oh_door_hand_detected();
+uint8_t BSP_get_row_pos_sensor_state();   //读取行检测开关状态
+uint8_t BSP_get_column_pos_sensor_state();//列检测到开关
+uint8_t BSP_is_oh_door_in_top_pos();
+uint8_t BSP_is_oh_door_in_bot_pos();
+uint8_t BSP_is_cup_in_slot_pos();
+//输入端口
+uint8_t BSP_is_column_step_motor_fault();
+uint8_t BSP_is_column_step_motor_stall();
 
-
-
-
-
-
+//adc
+int8_t BSP_get_temperature(uint16_t adc_value);
 
 void BSP_row_step_motor_init();
 void BSP_column_step_motor_init();
-
 void BSP_set_opt_type(uint16_t opt_type);
-
-uint8_t BSP_is_row_step_motor_on_rst_pos();
-uint8_t BSP_is_row_step_motor_on_tar_pos();
-uint8_t BSP_is_row_step_motor_on_rst_dir();
-uint8_t BSP_is_column_step_motor_on_rst_pos();
-uint8_t BSP_is_column_step_motor_on_tar_pos();
-uint8_t BSP_is_column_step_motor_on_rst_dir();
-
-//微动开关
-uint8_t BSP_is_ms_3_on_tar_pos();
-uint8_t BSP_is_ms_4_on_tar_pos();
-uint8_t BSP_is_ms_5_on_tar_pos();
-uint8_t BSP_is_ms_6_on_tar_pos();
-uint8_t BSP_is_ms_7_on_tar_pos();
-uint8_t BSP_is_ms_8_on_tar_pos();
-uint8_t BSP_is_ms_9_on_tar_pos();
-uint8_t BSP_is_ms_10_on_tar_pos();
-
-//光电开关
-uint8_t BSP_is_ps_1_on_tar_pos();
-uint8_t BSP_is_ps_2_on_tar_pos();
-uint8_t BSP_is_ps_3_on_tar_pos();
-uint8_t BSP_is_ps_4_on_tar_pos();
-uint8_t BSP_is_ps_5_on_tar_pos();
-uint8_t BSP_is_ps_6_on_tar_pos();
-
-
-
-
 
 void BSP_press_motor_pwr_dwn();
 void BSP_press_motor_pwr_on_positive();
@@ -162,13 +134,16 @@ void BSP_compressor_pwr_dwn();
 void BSP_juicing_motor_pwr_on();
 void BSP_juicing_motor_pwr_dwn();
 
-void BSP_row_step_motor_pwr_on_positive(uint32_t steps);
-void BSP_row_step_motor_pwr_on_negative(uint32_t steps);
+void BSP_row_step_motor_pwr_dwn();
+void BSP_row_step_motor_pwr_on_positive();
+void BSP_row_step_motor_pwr_on_negative();
 
-void BSP_column_step_motor_pwr_on_positive(uint32_t steps);
-void BSP_column_step_motor_pwr_on_negative(uint32_t steps);
+void BSP_column_step_motor_pwr_dwn();
+void BSP_column_step_motor_pwr_on_positive();
+void BSP_column_step_motor_pwr_on_negative();
 
-
+void BSP_running_led_turn_on();
+void BSP_running_led_turn_off();
 
 
 

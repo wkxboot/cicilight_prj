@@ -31,14 +31,10 @@
 #include "mbport.h"
 
 #include "cmsis_os.h"
-#include "app_log.h"
-
-#if APP_LOG_ENABLED > 0    
-#undef  APP_LOG_MODULE_NAME 
-#undef  APP_LOG_MODULE_LEVEL
 #define APP_LOG_MODULE_NAME   "[portevent]"
 #define APP_LOG_MODULE_LEVEL   APP_LOG_LEVEL_DEBUG 
-#endif
+#include "app_log.h"
+
 
 
 /* ----------------------- Defines ------------------------------------------*/

@@ -1,4 +1,4 @@
-"D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\libraries\segger_rtt\SEGGER_RTT.c"
+"D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\libraries\SEGGER_RTT_V612j\RTT\SEGGER_RTT.c"
 -std=c11
 -ferror-limit=0
 -I
@@ -22,7 +22,9 @@ D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../libraries/
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../libraries/util
 -I
-D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../libraries/segger_rtt
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../libraries/SEGGER_RTT_V612j/RTT
+-I
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../libraries/SEGGER_RTT_V612j/Syscalls
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../Src/user_tasks
 -I
@@ -37,6 +39,10 @@ D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../Middleware
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../Drivers/BSP/components/drv8711
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../Drivers/BSP/components/rgb_led
+-I
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../Drivers/BSP/components/ntc
+-I
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../Drivers/BSP/common
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM/../Drivers/BSP/cicilight_v1
 -I
@@ -66,7 +72,9 @@ D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\libraries\log
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\libraries\util
 -I
-D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\libraries\segger_rtt
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\libraries\SEGGER_RTT_V612j\RTT
+-I
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\libraries\SEGGER_RTT_V612j\Syscalls
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Src\user_tasks
 -I
@@ -81,6 +89,10 @@ D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Middlewares\Third_P
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Drivers\BSP\components\drv8711
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Drivers\BSP\components\rgb_led
+-I
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Drivers\BSP\components\ntc
+-I
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Drivers\BSP\common
 -I
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Drivers\BSP\cicilight_v1
 -I

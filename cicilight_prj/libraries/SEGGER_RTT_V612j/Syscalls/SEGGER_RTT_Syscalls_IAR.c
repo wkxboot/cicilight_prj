@@ -1,25 +1,40 @@
 /*********************************************************************
-*               SEGGER MICROCONTROLLER GmbH & Co. KG                 *
-*       Solutions for real time microcontroller applications         *
+*                SEGGER Microcontroller GmbH & Co. KG                *
+*                        The Embedded Experts                        *
 **********************************************************************
 *                                                                    *
-*       (c) 2014 - 2015  SEGGER Microcontroller GmbH & Co. KG        *
+*       (c) 2014 - 2017  SEGGER Microcontroller GmbH & Co. KG        *
 *                                                                    *
 *       www.segger.com     Support: support@segger.com               *
 *                                                                    *
 **********************************************************************
 *                                                                    *
+*       SEGGER RTT * Real Time Transfer for embedded targets         *
+*                                                                    *
+**********************************************************************
+*                                                                    *
 * All rights reserved.                                               *
 *                                                                    *
-* * This software may in its unmodified form be freely redistributed *
-*   in source form.                                                  *
-* * The source code may be modified, provided the source code        *
-*   retains the above copyright notice, this list of conditions and  *
-*   the following disclaimer.                                        *
-* * Modified versions of this software in source or linkable form    *
-*   may not be distributed without prior consent of SEGGER.          *
-* * This software may only be used for communication with SEGGER     *
-*   J-Link debug probes.                                             *
+* SEGGER strongly recommends to not make any changes                 *
+* to or modify the source code of this software in order to stay     *
+* compatible with the RTT protocol and J-Link.                       *
+*                                                                    *
+* Redistribution and use in source and binary forms, with or         *
+* without modification, are permitted provided that the following    *
+* conditions are met:                                                *
+*                                                                    *
+* o Redistributions of source code must retain the above copyright   *
+*   notice, this list of conditions and the following disclaimer.    *
+*                                                                    *
+* o Redistributions in binary form must reproduce the above          *
+*   copyright notice, this list of conditions and the following      *
+*   disclaimer in the documentation and/or other materials provided  *
+*   with the distribution.                                           *
+*                                                                    *
+* o Neither the name of SEGGER Microcontroller GmbH & Co. KG         *
+*   nor the names of its contributors may be used to endorse or      *
+*   promote products derived from this software without specific     *
+*   prior written permission.                                        *
 *                                                                    *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND             *
 * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,        *
@@ -36,14 +51,20 @@
 * DAMAGE.                                                            *
 *                                                                    *
 **********************************************************************
---------  END-OF-HEADER  ---------------------------------------------
+*                                                                    *
+*       RTT version: 6.12j                                           *
+*                                                                    *
+**********************************************************************
+---------------------------END-OF-HEADER------------------------------
 File    : SEGGER_RTT_Syscalls_IAR.c
 Purpose : Low-level functions for using printf() via RTT in IAR.
-          To use RTT for printf output, include this file in your
+          To use RTT for printf output, include this file in your 
           application and set the Library Configuration to Normal.
+Revision: $Rev: 4351 $
 ----------------------------------------------------------------------
 */
-#if defined(NRF_LOG_USES_RTT) && NRF_LOG_USES_RTT == 1
+#ifdef __IAR_SYSTEMS_ICC__
+
 #include <yfuns.h>
 #include "SEGGER_RTT.h"
 #pragma module_name = "?__write"
@@ -94,5 +115,5 @@ size_t __write_buffered(int handle, const unsigned char * buffer, size_t size) {
   return size;
 }
 
-#endif /*NRF_LOG_USES_RTT==1*/
+#endif
 /****** End Of File *************************************************/

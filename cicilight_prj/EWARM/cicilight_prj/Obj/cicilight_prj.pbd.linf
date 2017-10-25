@@ -2,6 +2,7 @@
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\adc.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\app_error.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\app_log.pbi
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\app_log_port.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\cmsis_os.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\croutine.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\dma.pbi
@@ -10,11 +11,11 @@ D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\freertos.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\gpio.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\heap_4.pbi
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\io_check_task.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\JJDK_ZK_GZ1.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\list.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\main.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\mb.pbi
-D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\mb_msg .pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\mb_reg.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\mbcrc.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\mbfunccoils.pbi
@@ -25,6 +26,7 @@ D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\mbfuncother.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\mbrtu.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\mbutils.pbi
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\ntc_3950.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\port.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\portevent.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\portother.pbi
@@ -32,9 +34,9 @@ D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\porttimer.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\queue.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\rgb_led.pbi
-D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\RTT_Syscalls_IAR.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\SEGGER_RTT.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\SEGGER_RTT_printf.pbi
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\SEGGER_RTT_Syscalls_IAR.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\spi.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\stm32f1xx_hal.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\stm32f1xx_hal_adc.pbi
@@ -53,9 +55,11 @@ D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\stm32f1xx_hal_spi_ex.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\stm32f1xx_hal_tim.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\stm32f1xx_hal_tim_ex.pbi
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\stm32f1xx_hal_uart.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\stm32f1xx_it.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\system_stm32f1xx.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\tasks.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\tim.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\timers.pbi
+D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\usart.pbi
 D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\EWARM\cicilight_prj\Obj\user_tasks.pbi

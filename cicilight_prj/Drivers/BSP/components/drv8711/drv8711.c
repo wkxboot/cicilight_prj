@@ -3,15 +3,9 @@
 #include "cmsis_os.h"
 #include "drv8711.h"
 #include "JJDK_ZK_GZ1.h"
-#include "app_log.h"
-
-#if APP_LOG_ENABLED > 0    
-#undef  APP_LOG_MODULE_NAME 
-#undef  APP_LOG_MODULE_LEVEL
 #define APP_LOG_MODULE_NAME   "[drv8711]"
 #define APP_LOG_MODULE_LEVEL   APP_LOG_LEVEL_DEBUG    
-#endif
-
+#include "app_log.h"
 
 extern SPI_HandleTypeDef hspi2;
 
@@ -64,7 +58,7 @@ void begin (unsigned int torque, unsigned int gain, unsigned int microsteps)
       break;
     }
 	
-	G_CTRL_REG.EXSTALL 	= 0x00;  //Internal Stall Detect
+	G_CTRL_REG.EXSTALL 	= 0x01;  //External Stall Detect
 	
 	switch (microsteps) {
     case 1:
@@ -118,32 +112,32 @@ void begin (unsigned int torque, unsigned int gain, unsigned int microsteps)
         //1000 000 0 00110000
 
 	// BLANK Register
-	G_BLANK_REG.Address = 0x03;
+	G_BLANK_REG.Address     = 0x03;
 	G_BLANK_REG.ABT 	= 0x01;  //enable adaptive blanking time
 	G_BLANK_REG.TBLANK 	= 0x08;  //no idea what this should be but the
         //1000 000 1 00001000            //user guide shows it set to this
 
 	// DECAY Register.
-	G_DECAY_REG.Address = 0x04;
-	G_DECAY_REG.DECMOD  = 0x01;  //mixed decay
-	G_DECAY_REG.TDECAY = 0x80;  //default
+	G_DECAY_REG.Address     = 0x04;
+	G_DECAY_REG.DECMOD      = 0x01;  //mixed decay
+	G_DECAY_REG.TDECAY      = 0x80;  //default
         //1000001100010000
 
 	// STALL Register
-	G_STALL_REG.Address = 0x05;
-	G_STALL_REG.VDIV 	= 0x01;  //Back EMF is divided by 8
+	G_STALL_REG.Address     = 0x05;
+	G_STALL_REG.VDIV 	= 0x02;  //Back EMF is divided by 8
 	G_STALL_REG.SDCNT 	= 0x00;  //stalln asserted after 8 steps
 	G_STALL_REG.SDTHR 	= 0x40;  //default
         //1000111101000000
 
 	// DRIVE Register
-	G_DRIVE_REG.Address = 0x06;
-	G_DRIVE_REG.IDRIVEP = 0x00;  //High Side 50mA peak (source)
-	G_DRIVE_REG.IDRIVEN = 0x00;  //Low Side 100mA peak (sink)
-	G_DRIVE_REG.TDRIVEP = 0x01;  //High Side gate drive 500nS
-	G_DRIVE_REG.TDRIVEN = 0x01;  //Low Side Gate Drive 500nS
-	G_DRIVE_REG.OCPDEG = 0x01;  //OCP Deglitch Time 1uS
-	G_DRIVE_REG.OCPTH =  0x02;    //OCP Threshold 500mV
+	G_DRIVE_REG.Address     = 0x06;
+	G_DRIVE_REG.IDRIVEP     = 0x00;  //High Side 50mA peak (source)
+	G_DRIVE_REG.IDRIVEN     = 0x00;  //Low Side 100mA peak (sink)
+	G_DRIVE_REG.TDRIVEP     = 0x01;  //High Side gate drive 500nS
+	G_DRIVE_REG.TDRIVEN     = 0x01;  //Low Side Gate Drive 500nS
+	G_DRIVE_REG.OCPDEG      = 0x01;  //OCP Deglitch Time 1uS
+	G_DRIVE_REG.OCPTH       = 0x02;  //OCP Threshold 500mV
         //1000000001010101
 
 	// STATUS Register
@@ -332,6 +326,8 @@ void WriteAllRegisters()
     dataLo = (G_CTRL_REG.EXSTALL << 7) | (G_CTRL_REG.MODE << 3) | (G_CTRL_REG.RSTEP << 2) | (G_CTRL_REG.RDIR << 1) | (G_CTRL_REG.ENBL);
     SPI_DRV8711_ReadWrite(dataHi, dataLo);
 }
+
+
 
 unsigned int SPI_DRV8711_ReadWrite(unsigned char dataHi, unsigned char dataLo)
 {

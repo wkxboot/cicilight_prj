@@ -20,14 +20,9 @@
 #include "mb.h"
 #include "mbport.h"
 #include "cmsis_os.h"
-#include "app_log.h"
-
-#if APP_LOG_ENABLED > 0    
-#undef  APP_LOG_MODULE_NAME 
-#undef  APP_LOG_MODULE_LEVEL
 #define APP_LOG_MODULE_NAME   "[porttimer]"
 #define APP_LOG_MODULE_LEVEL   APP_LOG_LEVEL_DEBUG 
-#endif
+#include "app_log.h"
 
 
 extern osTimerId SLAVE_MB_timer_hdl;
@@ -45,13 +40,13 @@ extern osTimerId SLAVE_MB_timer_hdl;
 
 BOOL xMBPortTimersInit( USHORT usTim1Timerout50us )
 {
-APP_LOG_DEBUG("MB timer init!\r\n");
+APP_LOG_DEBUG("MB timer 初始化完毕!\r\n");
 return TRUE;
 }
 
 void vMBPortTimerClose( void )
 {
-APP_LOG_DEBUG("MB timer close!\r\n");
+APP_LOG_DEBUG("MB timer 关闭!\r\n");
 }
 
 void vMBPortTimersEnable()
@@ -61,7 +56,8 @@ void vMBPortTimersEnable()
 /// \param[in]     millisec      time delay value of the timer.
 /// \return status code that indicates the execution status of the function.
 /// \note MUST REMAIN UNCHANGED: \b osTimerStart shall be consistent in every CMSIS-RTOS.
-  osTimerStart (SLAVE_MB_timer_hdl, 3);
+  osTimerStart( SLAVE_MB_timer_hdl, 3);
+  APP_LOG_DEBUG("MB timer 启动!\r\n");
 }
 
 void vMBPortTimersDisable( )
@@ -70,14 +66,13 @@ void vMBPortTimersDisable( )
 /// \param[in]     timer_id      timer ID obtained by \ref osTimerCreate.
 /// \return status code that indicates the execution status of the function.
 /// \note MUST REMAIN UNCHANGED: \b osTimerStop shall be consistent in every CMSIS-RTOS.
-  APP_LOG_DEBUG("MB timer stop!\r\n");
-  osTimerStop (SLAVE_MB_timer_hdl);
- 
+  osTimerStop(SLAVE_MB_timer_hdl);
+  APP_LOG_DEBUG("MB timer 停止!\r\n");
 }
 
 
 void SLAVE_MB_timer_expired_callback(void const * argument)
 {
- APP_LOG_DEBUG("MB timer expired!\r\n");
+ APP_LOG_DEBUG("MB timer 时间到达!\r\n");
  pxMBPortCBTimerExpired();
 }

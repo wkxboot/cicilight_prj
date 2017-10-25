@@ -131,7 +131,11 @@ prveMBError2Exception( eMBErrorCode eErrorCode )
         case MB_ETIMEDOUT:
             eStatus = MB_EX_SLAVE_BUSY;
             break;
-
+       /*add by wkxboot begin*/
+       case MB_EINVAL:
+            eStatus = MB_EX_ILLEGAL_DATA_VALUE;
+            break;
+       /*add by wkxboot end*/
         default:
             eStatus = MB_EX_SLAVE_DEVICE_FAILURE;
             break;

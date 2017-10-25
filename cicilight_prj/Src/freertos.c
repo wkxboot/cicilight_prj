@@ -52,7 +52,16 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */     
-
+#include "gpio.h"
+#include "tim.h"
+#include "app_log.h"
+    
+#if APP_LOG_ENABLED > 0    
+#undef  APP_LOG_MODULE_NAME 
+#undef  APP_LOG_MODULE_LEVEL
+#define APP_LOG_MODULE_NAME   "[freertos]"
+#define APP_LOG_MODULE_LEVEL   APP_LOG_LEVEL_DEBUG    
+#endif
 /* USER CODE END Includes */
 
 /* Variables -----------------------------------------------------------------*/
@@ -72,6 +81,23 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 /* USER CODE END FunctionPrototypes */
 
 /* Hook prototypes */
+void vApplicationMallocFailedHook(void);
+
+/* USER CODE BEGIN 5 */
+__weak void vApplicationMallocFailedHook(void)
+{
+   /* vApplicationMallocFailedHook() will only be called if
+   configUSE_MALLOC_FAILED_HOOK is set to 1 in FreeRTOSConfig.h. It is a hook
+   function that will get called if a call to pvPortMalloc() fails.
+   pvPortMalloc() is called internally by the kernel whenever a task, queue,
+   timer or semaphore is created. It is also called by various parts of the
+   demo application. If heap_1.c or heap_2.c are used, then the size of the
+   heap available to pvPortMalloc() is defined by configTOTAL_HEAP_SIZE in
+   FreeRTOSConfig.h, and the xPortGetFreeHeapSize() API function can be used
+   to query the size of free heap space that remains (although it does not
+   provide information on how the remaining heap might be fragmented). */
+}
+/* USER CODE END 5 */
 
 /* Init FreeRTOS */
 
@@ -94,7 +120,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -112,34 +138,17 @@ void StartDefaultTask(void const * argument)
 
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
+  void app_create_user_tasks(void);
+   app_create_user_tasks();
   for(;;)
   {
-    osDelay(1);
+    osDelay(3000);
   }
   /* USER CODE END StartDefaultTask */
 }
 
 /* USER CODE BEGIN Application */
-uint32_t APP_TIMESTAMP(void)
-{
-  return osKernelSysTick();
-}
 
-void SEGGER_RTT_CRITICAL_REGION_ENTER()      
-{                               
-  if(__get_IPSR()==0)                  
-  {                                  
-   taskENTER_CRITICAL();                                              
- }  
-}
-
-void SEGGER_RTT_CRITICAL_REGION_EXIT()   
-{                                  
-  if ( __get_IPSR()==0)                 
-  {                                  
-   taskEXIT_CRITICAL();              
-  }                                  
-}     
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
