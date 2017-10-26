@@ -358,6 +358,7 @@ static void oh_door_task(void const * argument)
   if(msg.value.v==OH_DOOR_CLOSE_MSG)
   {
   oh_door.tar_pos=BOT_POS;
+  oh_door.detect_timeout=OH_DOOR_DETECT_TIMEOUT_VALUE+1;//向下运动先要检查有无异物
   APP_LOG_INFO("关升降门！\r\n");
   }
   else
@@ -380,39 +381,28 @@ static void oh_door_task(void const * argument)
   oh_door.detect=JUICE_FALSE;
   APP_LOG_INFO("升降门位置到底部！\r\n");
  }
- if(BSP_is_oh_door_in_top_pos()==JUICE_TRUE && oh_door.cur_pos!=TOP_POS)
+ if(BSP_is_oh_door_in_top_pos()==JUICE_TRUE )
  {
+  if(oh_door.cur_pos!=TOP_POS)
+  {
   oh_door.cur_pos=TOP_POS;
   APP_LOG_INFO("升降门位置到顶部！\r\n");
-  if(oh_door.detect==JUICE_TRUE)
-  oh_door.detect_timeout=OH_DOOR_DETECT_TIMEOUT_VALUE;
+  }
+  if(oh_door.detect==JUICE_TRUE)//只有在开门后才开始计算超时时间
+   oh_door.detect_timeout+=OH_DOOR_INTERVAL_VALUE;
+
  }
  /*升降门的异常状态*/
  //1.是否夹手或者对射管探测障碍物
- if((BSP_is_oh_door_hand_detected()==JUICE_TRUE || BSP_is_oh_door_clamp_hand()==JUICE_TRUE)  && oh_door.dir==NEGATIVE_DIR)
+ if((BSP_is_oh_door_hand_detected()==JUICE_TRUE || BSP_is_oh_door_clamp_hand()==JUICE_TRUE)  && (oh_door.dir==NEGATIVE_DIR ||oh_door.detect_timeout > OH_DOOR_DETECT_TIMEOUT_VALUE))
  {
-  APP_LOG_WARNING("升降门防夹手检测到异物,开始上升！\r\n");
-  oh_door.dir=POSITIVE_DIR;
+  APP_LOG_WARNING("升降门防夹手检测到异物！\r\n");
   oh_door.detect=JUICE_TRUE;
-  oh_door.run_time=0;
-  BSP_oh_door_motor_pwr_on_positive();  
- }
- //如果探测到夹手或者对射管探测障碍物
- if(oh_door.detect==JUICE_TRUE && oh_door.detect_timeout>0)
- {
-  if(oh_door.detect_timeout>OH_DOOR_INTERVAL_VALUE)
-  oh_door.detect_timeout-=OH_DOOR_INTERVAL_VALUE;
-  else
   oh_door.detect_timeout=0;
-  if(oh_door.detect_timeout==0)
-  {
-  oh_door.dir=NEGATIVE_DIR;
-  oh_door.detect=JUICE_FALSE;
-  oh_door.run_time=0;
-  BSP_oh_door_motor_pwr_on_negative(); 
-  }
+  //BSP_oh_door_motor_pwr_on_positive();  
  }
  //2.是否电机电流过载
+ if(oh_door.dir!=NULL_DIR)
  oh_door.run_time+= OH_DOOR_INTERVAL_VALUE;
  if(oh_door.run_time > OH_DOOR_OC_DELAY_VALUE && juice_is_oh_door_oc()==JUICE_TRUE)
  {
@@ -430,18 +420,50 @@ static void oh_door_task(void const * argument)
   else if(oh_door.tar_pos==TOP_POS)
   osSignalSet(sync_task_hdl,OH_DOOR_REACH_BOT_POS_ERR_SIGNAL); 
   
-  continue;//
+  continue;//出错返回
  }
  
  /*确定升降门运行的方向*/
-  if(oh_door.cur_pos!=oh_door.tar_pos)
- {
-   if(oh_door.tar_pos==BOT_POS && oh_door.dir!=NEGATIVE_DIR && oh_door.detect==JUICE_FALSE)
+  if(oh_door.detect==JUICE_TRUE ) 
+  {
+   if(oh_door.cur_pos!=TOP_POS) 
    {
-   APP_LOG_INFO("当前和目标位置不一致，反转！\r\n");
-   oh_door.dir=NEGATIVE_DIR;
+     if(oh_door.dir!=POSITIVE_DIR)
+     {
+     APP_LOG_INFO("升降门探测到异物后开始上升！\r\n");
+     oh_door.dir=POSITIVE_DIR;
+     oh_door.run_time=0;
+     BSP_oh_door_motor_pwr_on_positive();
+     }
+   }
+   else 
+   {
+   if(oh_door.dir!=NULL_DIR)
+   {
+   APP_LOG_INFO("升降门探测到异物后开门到位！\r\n");
+   oh_door.dir=NULL_DIR;
    oh_door.run_time=0;
-   BSP_oh_door_motor_pwr_on_negative();
+   BSP_oh_door_motor_pwr_dwn();
+   }
+   else if(oh_door.detect_timeout > OH_DOOR_DETECT_TIMEOUT_VALUE)
+   {
+   APP_LOG_INFO("升降门在没有探测到异物5秒后开始尝试再次关门！\r\n");
+   oh_door.detect=JUICE_FALSE;
+   oh_door.detect_timeout=0;
+   oh_door.run_time=0;
+   oh_door.dir=NEGATIVE_DIR;
+   BSP_oh_door_motor_pwr_on_negative(); 
+   }
+   }
+  }
+  else if(oh_door.cur_pos!=oh_door.tar_pos)
+  {
+   if(oh_door.tar_pos==BOT_POS && oh_door.dir!=NEGATIVE_DIR)
+   {
+     APP_LOG_INFO("当前和目标位置不一致，反转！\r\n");
+     oh_door.dir=NEGATIVE_DIR;
+     oh_door.run_time=0;
+     BSP_oh_door_motor_pwr_on_negative();
    }
    else if(oh_door.tar_pos==TOP_POS && oh_door.dir!=POSITIVE_DIR)
    {
@@ -1183,6 +1205,15 @@ static uint8_t juice_get_operation_param(uint8_t *ptr_row_pos,uint8_t *ptr_colum
   return JUICE_FALSE;
   row_pos=pos>>8;
   column_pos=pos&0xff;
+  
+ if(opt==REG_VALUE_OPERATION_TYPE_SHOW)
+ {
+  APP_LOG_INFO("开始机械手表演动作！目标位置x：%d y：%d.\r\n",row_pos); 
+ }
+ else
+ {
+  APP_LOG_INFO("开始机械手抓杯榨汁动作！目标位置x：%d y：%d.\r\n",column_pos);  
+ }
  *ptr_row_pos=manipulator_get_sensor_row_pos(row_pos);
  *ptr_column_pos=manipulator_get_sensor_column_pos(column_pos);
  *ptr_opt=opt;
@@ -1235,14 +1266,6 @@ static void sync_task(void const * argument)
  APP_LOG_ERROR("错误，获取运行参数错误！\r\n");
  continue;
  }
- if(opt==REG_VALUE_OPERATION_TYPE_SHOW)
- {
-  APP_LOG_INFO("开始机械手表演动作！目标位置x：%d y：%d.\r\n",(row_sensor_pos-5)/4+1,(column_sensor_pos-3)/2+1); 
- }
- else
- {
-  APP_LOG_INFO("开始机械手抓杯榨汁动作！目标位置x：%d y：%d.\r\n",(row_sensor_pos-5)/4+1,(column_sensor_pos-3)/2+1);  
- }
  juice_transaction_excuting();
  if(juice_get_fault_code())//如果有错误码主要是温度错误和榨汁口有未拿走的果杯！
  {
@@ -1270,7 +1293,7 @@ static void sync_task(void const * argument)
  continue;
  }
  APP_LOG_INFO("同步任务收到关闭升降门到位信号！\r\n");
- APP_LOG_INFO("机械手爪子复位！\r\n");
+ APP_LOG_INFO("机械手爪子复位抓紧！\r\n");
  osMessagePut(servo1_msg_queue_hdl,SERVO1_ANGLE_CLOSE_MSG,0);
  signals=juice_wait_signals(SERVO1_REACH_POS_OK_SIGNAL,SERVO1_TIMEOUT_VALUE);
  if(signals.status==osEventTimeout)
