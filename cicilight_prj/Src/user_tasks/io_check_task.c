@@ -196,6 +196,80 @@ void io_check_task(void const * argument)
   APP_LOG_DEBUG("榨汁电机断电！\r\n");
   continue;
   }
+  
+  if(strcmp(cmd_str,CMD_PWR_ON_POSITIVE_ROW_MOTOR)==0)
+  {
+  BSP_row_step_motor_pwr_on_positive();
+  APP_LOG_DEBUG("行步进电机正转！\r\n");
+  continue;
+  }
+  if(strcmp(cmd_str,CMD_PWR_ON_NEGATIVE_ROW_MOTOR)==0)
+  {
+  BSP_row_step_motor_pwr_on_negative();
+  APP_LOG_DEBUG("行步进电机反转！\r\n");
+  continue;
+  }
+  if(strcmp(cmd_str,CMD_PWR_DWN_ROW_MOTOR)==0)
+  {
+  BSP_row_step_motor_pwr_dwn();
+  APP_LOG_DEBUG("行步进电机停机！\r\n");
+  continue;
+  }
+  
+   if(strcmp(cmd_str,CMD_PWR_ON_POSITIVE_COLUMN_MOTOR)==0)
+  {
+  BSP_column_step_motor_pwr_on_positive();
+  APP_LOG_DEBUG("列步进电机正转！\r\n");
+  continue;
+  }
+  if(strcmp(cmd_str,CMD_PWR_ON_NEGATIVE_COLUMN_MOTOR)==0)
+  {
+  BSP_column_step_motor_pwr_on_negative();
+  APP_LOG_DEBUG("列步进电机反转！\r\n");
+  continue;
+  }
+  if(strcmp(cmd_str,CMD_PWR_DWN_COLUMN_MOTOR)==0)
+  {
+  BSP_column_step_motor_pwr_dwn();
+  APP_LOG_DEBUG("列步进电机停机！\r\n");
+  continue;
+  }
+  extern osMessageQId servo2_msg_queue_hdl;
+  extern osMessageQId servo1_msg_queue_hdl;
+  if(strcmp(cmd_str,CMD_SERVO1_CLOSE)==0)
+  {
+  APP_LOG_DEBUG("爪子抓紧！\r\n");
+  osMessagePut(servo1_msg_queue_hdl,SERVO1_ANGLE_CLOSE_MSG,0);
+  continue;
+  }
+  if(strcmp(cmd_str,CMD_SERVO1_OPEN)==0)
+  {
+  APP_LOG_DEBUG("爪子张开！\r\n");
+  osMessagePut(servo1_msg_queue_hdl,SERVO1_ANGLE_OPEN_MSG,0);
+  continue;
+  }
+  
+  if(strcmp(cmd_str,CMD_SERVO2_25)==0)
+  {
+    APP_LOG_DEBUG("机械手臂25°！\r\n");
+  osMessagePut(servo2_msg_queue_hdl,SERVO2_ANGLE_25_MSG,0);
+  continue;
+  }
+  
+  
+ if(strcmp(cmd_str,CMD_SERVO2_90)==0)
+  {
+    APP_LOG_DEBUG("机械手臂90°！\r\n");
+  osMessagePut(servo2_msg_queue_hdl,SERVO2_ANGLE_90_MSG,0);
+  continue;
+  }
+  if(strcmp(cmd_str,CMD_SERVO2_180)==0)
+  {
+    APP_LOG_DEBUG("机械手臂180°！\r\n");
+  osMessagePut(servo2_msg_queue_hdl,SERVO2_ANGLE_180_MSG,0);
+  continue;
+  }
+  
   if(strcmp(cmd_str,CMD_GET_TEMPERATURE)==0)
   {
   for(uint8_t i=0;i<5;i++)
@@ -204,6 +278,9 @@ void io_check_task(void const * argument)
   APP_LOG_INFO("温度结果值:%d\r\n",BSP_get_temperature(adc_sample[3]));
   continue;
   }
+  
+  
+  
   
 //汉字命令
   extern osMessageQId presser_msg_queue_hdl;

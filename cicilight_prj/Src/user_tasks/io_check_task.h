@@ -22,6 +22,20 @@
 #define  CMD_PWR_DWN_COMPRESSOR                 "c compressor"
 #define  CMD_PWR_ON_JUICING                     "o juice"
 #define  CMD_PWR_DWN_JUICING                    "c juice"
+#define  CMD_PWR_ON_POSITIVE_ROW_MOTOR          "p row"
+#define  CMD_PWR_ON_NEGATIVE_ROW_MOTOR          "n row"
+#define  CMD_PWR_DWN_ROW_MOTOR                  "d row"
+#define  CMD_PWR_ON_POSITIVE_COLUMN_MOTOR       "p column"
+#define  CMD_PWR_ON_NEGATIVE_COLUMN_MOTOR       "n column"
+#define  CMD_PWR_DWN_COLUMN_MOTOR               "d column"
+
+#define  CMD_SERVO1_CLOSE                       "s1 close"
+#define  CMD_SERVO1_OPEN                        "s1 open"
+
+#define  CMD_SERVO2_25                          "s2 25"
+#define  CMD_SERVO2_90                          "s2 90"
+#define  CMD_SERVO2_180                         "s2 180"
+
 #define  CMD_GET_TEMPERATURE                    "get t"
 
 

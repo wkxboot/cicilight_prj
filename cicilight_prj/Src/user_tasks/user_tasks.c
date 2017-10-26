@@ -98,6 +98,8 @@ static void juice_fault_after_transaction_completed();
 
 static void MX_TIM2_ReInit_CH3(uint16_t pulse);
 static void MX_TIM2_ReInit_CH4(uint16_t pulse);
+static void MX_TIM8_ReInit(uint16_t f);
+static void manipulator_pwm_frequency(uint8_t stop_signal,uint16_t interval);
 
 //创建用户任务
 void app_create_user_tasks(void)
@@ -490,48 +492,50 @@ static void oh_door_task(void const * argument)
  }//end of while(1)
 }
 
-//机械手舵机1任务
+//机械爪子舵机1任务
 static void servo1_task(void const * argument)
 {
  osEvent msg;
- APP_LOG_INFO("++++++舵机1任务开始！\r\n");
+ APP_LOG_INFO("++++++机械爪子舵机1任务开始！\r\n");
  while(1)
  {
  msg= osMessageGet(servo1_msg_queue_hdl,osWaitForever);
  if(msg.status!=osEventMessage)
  {
-  APP_LOG_INFO("舵机1收到错误消息！\r\n");
-  continue ;
+ APP_LOG_INFO("舵机1收到错误消息！\r\n");
+ continue ;
  }
- APP_LOG_DEBUG("舵机1收到消息角度：%d°！\r\n",msg.value.v);
- HAL_TIM_PWM_Stop(&htim2,TIM_CHANNEL_3);
- MX_TIM2_ReInit_CH3((msg.value.v*11+500)/10);
- HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_3);
+ APP_LOG_INFO("舵机1收到消息角度：%d°！\r\n",msg.value.v);
+ HAL_TIM_PWM_Stop(&htim2,TIM_CHANNEL_4);
+ MX_TIM2_ReInit_CH4((msg.value.v*11+500)/10);
+ HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_4);
  osDelay(SERVO1_ENABLE_TIME_VALUE);
  osSignalSet(sync_task_hdl,SERVO1_REACH_POS_OK_SIGNAL);
- }
 }
-//机械手舵机2任务
+}
+
+//机械手臂舵机2任务
 static void servo2_task(void const * argument)
 {
  osEvent msg;
- APP_LOG_INFO("++++++舵机2任务开始！\r\n");
+ APP_LOG_INFO("++++++机械手臂舵机2任务开始！\r\n");
  while(1)
  {
  msg= osMessageGet(servo2_msg_queue_hdl,osWaitForever);
  if(msg.status!=osEventMessage)
  {
- APP_LOG_INFO("舵机2收到错误消息！\r\n");
- continue ;
+  APP_LOG_INFO("手臂舵机2收到错误消息！\r\n");
+  continue ;
  }
- APP_LOG_INFO("舵机2收到消息角度：%d°！\r\n",msg.value.v);
- HAL_TIM_PWM_Stop(&htim2,TIM_CHANNEL_4);
- MX_TIM2_ReInit_CH4((msg.value.v*11+500)/10);
- HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_4);
+ APP_LOG_DEBUG("手臂舵机2收到消息角度：%d°！\r\n",msg.value.v);
+ HAL_TIM_PWM_Stop(&htim2,TIM_CHANNEL_3);
+ MX_TIM2_ReInit_CH3((msg.value.v*11+500)/10);
+ HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_3);
  osDelay(SERVO2_ENABLE_TIME_VALUE);
  osSignalSet(sync_task_hdl,SERVO2_REACH_POS_OK_SIGNAL);
+ }
 }
-}
+
 //机械手滑台任务
 static void manipulator_task(void const * argument)
 {
@@ -717,8 +721,6 @@ static void manipulator_task(void const * argument)
  }
  }
  
- 
- 
  //全部到位发送到位消息
  if( manipulator.msg_send==JUICE_FALSE && manipulator.row.tar_pos == manipulator.row.cur_pos && manipulator.column.tar_pos == manipulator.column.cur_pos )
  {
@@ -726,6 +728,7 @@ static void manipulator_task(void const * argument)
   manipulator.msg_send=JUICE_TRUE;
   APP_LOG_INFO("机械手全部到达目标位置，发送到位信号！\r\n"); 
  }
+ 
  //运动时检测错误
  if(manipulator.row.active==JUICE_TRUE || manipulator.column.active==JUICE_TRUE)
  {
@@ -754,7 +757,8 @@ static void manipulator_task(void const * argument)
   manipulator.msg_send=JUICE_TRUE;
  }
  }
- 
+  //机械手速度步进
+ manipulator_pwm_frequency(manipulator.msg_send,MANIPULATOR_INTERVAL_VALUE);
  osDelay(MANIPULATOR_INTERVAL_VALUE);
  }
  }
@@ -1343,7 +1347,7 @@ static void sync_task(void const * argument)
  }
  
  APP_LOG_INFO("机械手手臂转到角度20°！\r\n");
- osMessagePut(servo2_msg_queue_hdl,SERVO2_ANGLE_20_MSG,0);
+ osMessagePut(servo2_msg_queue_hdl,SERVO2_ANGLE_25_MSG,0);
  juice_wait_signals(SERVO2_REACH_POS_OK_SIGNAL,SERVO2_TIMEOUT_VALUE);
  if(signals.status==osEventTimeout)
  {
@@ -1701,8 +1705,89 @@ static void MX_TIM2_ReInit_CH4(uint16_t pulse)
   }
 }
 
+static void manipulator_pwm_frequency(uint8_t stop_signal,uint16_t interval)
+{
+ static uint16_t timeout=0;
+ static uint16_t f=MANIPULATOR_START_FREQUENCY;
+ 
+ if(stop_signal==JUICE_TRUE )
+ {
+  if(f!=MANIPULATOR_START_FREQUENCY)
+  {   
+  f=MANIPULATOR_START_FREQUENCY;
+  timeout=0;
+  MX_TIM8_ReInit(f);
+  APP_LOG_INFO("机械手频率复位！当前频率：%d kHz！\r\n",f);
+  }
+  return ;
+ }
+ if(f==MANIPULATOR_EXPIRED_FREQUENCY)
+ return;
+ 
+ timeout+=interval;
+ if(timeout>=MANIPULATOR_STEP_FREQUENCY_TIMEOUT)//(MANIPULATOR_EXPIRED_FREQUENCY-MANIPULATOR_START_FREQUENCY)/MANIPULATOR_STEP_FREQUENCY)
+ {
+  timeout=0;
+  if(f+MANIPULATOR_STEP_FREQUENCY>=MANIPULATOR_EXPIRED_FREQUENCY)
+  {
+  f=MANIPULATOR_EXPIRED_FREQUENCY;
+  APP_LOG_INFO("机械手完成步进启动！当前频率：%d kHz！\r\n",f);
+  }
+  else
+  {
+  f+=MANIPULATOR_STEP_FREQUENCY;
+  APP_LOG_INFO("机械手正在步进启动中！当前频率：%d kHz！\r\n",f);
+  }
+  
+  MX_TIM8_ReInit(f);
+ }
+}
 
 
+static void MX_TIM8_ReInit(uint16_t f)
+{
+  TIM_MasterConfigTypeDef sMasterConfig;
+  TIM_OC_InitTypeDef sConfigOC;
+  uint16_t period;
+  period=1000/f;
+
+  htim8.Instance = TIM8;
+  htim8.Init.Prescaler = 72;
+  htim8.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim8.Init.Period = period;
+  htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim8.Init.RepetitionCounter = 0;
+  htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&htim8) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim8, &sMasterConfig) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = period/2;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+  if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+}
 
 
 

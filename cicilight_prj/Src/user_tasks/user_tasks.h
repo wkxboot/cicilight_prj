@@ -11,6 +11,11 @@
 #define  MANIPULATOR_ROW_SENSOR_TIMEOUT_VALUE            30//机械手行传感器抖动超时
 #define  MANIPULATOR_COLUMN_SENSOR_TIMEOUT_VALUE         30//机械手列传感器抖动超时
 #define  MANIPULATOR_INTERVAL_VALUE                      20//机械手传感器采样间隔/运行间隔
+#define  MANIPULATOR_START_FREQUENCY                     1 //khz
+#define  MANIPULATOR_EXPIRED_FREQUENCY                   20//khz
+#define  MANIPULATOR_STEP_FREQUENCY                      1 //khz
+#define  MANIPULATOR_STEP_FREQUENCY_TIMEOUT              60//ms
+
 #define  PRESSER_INTERVAL_VALUE                          20//压杯电机任务运行间隔
 #define  PRESSER_OC_DELAY_VALUE                          100//压杯电机启动后开始检查过载的延时时间
 #define  PRESSER_TIMEOUT_VALUE                           5000//压杯电机任务超时时间
@@ -57,7 +62,7 @@
 #define  SERVO1_ANGLE_OPEN_MSG                           115//时间=177
 #define  SERVO1_ANGLE_CLOSE_MSG                          142//时间=207
 #define  SERVO2_ANGLE_0_MSG                              0
-#define  SERVO2_ANGLE_20_MSG                             20
+#define  SERVO2_ANGLE_25_MSG                             25
 #define  SERVO2_ANGLE_90_MSG                             90
 #define  SERVO2_ANGLE_180_MSG                            180
 #define  JUICE_START_MSG                                 1
