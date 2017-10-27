@@ -192,6 +192,7 @@ uint8_t BSP_is_column_step_motor_fault()//只检测OCP和OTP错误
  GPIO_PinState pinstate;
  uint8_t ret=JUICE_FALSE;
  
+ return JUICE_FALSE;
  pinstate= HAL_GPIO_ReadPin(BSP_COLUMN_STEP_MOTOR_FAULT_POS_GPIO_Port,BSP_COLUMN_STEP_MOTOR_FAULT_POS_Pin);
  if( pinstate == BSP_COLUMN_STEP_MOTOR_FAULT_PIN_STATE)
  {

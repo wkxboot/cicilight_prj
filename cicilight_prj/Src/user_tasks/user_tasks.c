@@ -391,7 +391,7 @@ static void oh_door_task(void const * argument)
   APP_LOG_INFO("升降门位置到顶部！\r\n");
   }
   if(oh_door.detect==JUICE_TRUE)//只有在开门后才开始计算超时时间
-   oh_door.detect_timeout+=OH_DOOR_INTERVAL_VALUE;
+  oh_door.detect_timeout+=OH_DOOR_INTERVAL_VALUE;
 
  }
  /*升降门的异常状态*/
@@ -438,8 +438,8 @@ static void oh_door_task(void const * argument)
      BSP_oh_door_motor_pwr_on_positive();
      }
    }
-   else 
-   {
+  else 
+  {
    if(oh_door.dir!=NULL_DIR)
    {
    APP_LOG_INFO("升降门探测到异物后开门到位！\r\n");
@@ -456,7 +456,7 @@ static void oh_door_task(void const * argument)
    oh_door.dir=NEGATIVE_DIR;
    BSP_oh_door_motor_pwr_on_negative(); 
    }
-   }
+  }
   }
   else if(oh_door.cur_pos!=oh_door.tar_pos)
   {
@@ -644,7 +644,7 @@ static void manipulator_task(void const * argument)
   BSP_row_step_motor_pwr_on_positive();//正向运动
   APP_LOG_INFO("行目标位置 > 当前位置，设置行方向 = POSITIVE_DIR！行步进电机正转！\r\n");
  }
- else if(manipulator.row.tar_pos == manipulator.row.cur_pos && manipulator.row.dir!=NULL_DIR)
+ else if(manipulator.row.tar_pos == manipulator.row.cur_pos && manipulator.row.dir!=NULL_DIR)//需要修改，不然会在已经目标点时启动出错。
  {
   manipulator.row.dir=NULL_DIR;
   manipulator.row.active=JUICE_FALSE;
@@ -652,6 +652,10 @@ static void manipulator_task(void const * argument)
   APP_LOG_INFO("行目标位置 == 当前位置，设置行方向 = DIR_NULL！行步进电机停机！\r\n"); 
  }
  }
+ 
+ //在列步进电机确定了位置之后，始终监测是否被强制移动
+ 
+ 
  
  if(manipulator.column.active==JUICE_TRUE)
  {
@@ -711,7 +715,7 @@ static void manipulator_task(void const * argument)
   BSP_column_step_motor_pwr_on_positive();//正向运动
   APP_LOG_INFO("列目标位置 > 当前位置，设置列方向 = POSITIVE_DIR！列步进电机正转！\r\n");
  }
- else if(manipulator.column.tar_pos == manipulator.column.cur_pos && manipulator.column.dir!=NULL_DIR)
+ else if(manipulator.column.tar_pos == manipulator.column.cur_pos && manipulator.column.dir!=NULL_DIR)//需要修改，不然会在已经目标点时启动出错。
  {
   manipulator.column.dir=NULL_DIR;
   manipulator.column.active=JUICE_FALSE;
@@ -938,7 +942,7 @@ static void juice_task(void const * argument)
  {
   BSP_juicing_motor_pwr_on(); 
   APP_LOG_INFO("榨汁开始！打开榨汁电机！\r\n");
-  while(timeout<JUICING_TIMEOUT_VALUE)
+  while(timeout<JUICING_TIMEOUT_VALUE-10000)
   {
   msg= osMessageGet(juice_msg_queue_hdl,0); 
   if(msg.status==osEventMessage && msg.value.v == JUICE_STOP_MSG)
@@ -1036,7 +1040,7 @@ static uint8_t juice_is_column_step_motor_stall()//bemf 反向电动势
 {
  if(adc_result[4] < ADC_BEMF_THRESHOLD_mVOLTAGE)
  {
- APP_LOG_ERROR("60步进电机堵转：%d mA！",adc_result[4]);
+ APP_LOG_ERROR("60步进电机堵转：%d mA！\r\n",adc_result[4]);
  return JUICE_TRUE;
  }
  return JUICE_FALSE;
@@ -1084,7 +1088,7 @@ static void adc_task(void const * argument)
 //根据行坐标点得到行传感器位置
 static uint8_t manipulator_get_sensor_row_pos(uint8_t juice_row_pos)
 {
-  uint8_t sensor_pos = (juice_row_pos-1)*4+5;
+  uint8_t sensor_pos = (juice_row_pos-1)*4+6;
 
   return sensor_pos;
 }
@@ -1092,7 +1096,7 @@ static uint8_t manipulator_get_sensor_row_pos(uint8_t juice_row_pos)
 //根据列坐标点得到列传感器位置
 static uint8_t manipulator_get_sensor_column_pos(uint8_t juice_column_pos)
 {
- uint8_t sensor_pos=(juice_column_pos-1)*2+3;
+ uint8_t sensor_pos=(juice_column_pos-1)*2+4;
  
  return sensor_pos;
 }
@@ -1216,11 +1220,11 @@ static uint8_t juice_get_operation_param(uint8_t *ptr_row_pos,uint8_t *ptr_colum
   
  if(opt==REG_VALUE_OPERATION_TYPE_SHOW)
  {
-  APP_LOG_INFO("开始机械手表演动作！目标位置x：%d y：%d.\r\n",row_pos); 
+  APP_LOG_INFO("开始机械手表演动作！目标位置x：%d y：%d.\r\n",row_pos,column_pos); 
  }
  else
  {
-  APP_LOG_INFO("开始机械手抓杯榨汁动作！目标位置x：%d y：%d.\r\n",column_pos);  
+  APP_LOG_INFO("开始机械手抓杯榨汁动作！目标位置x：%d y：%d.\r\n",row_pos,column_pos);  
  }
  *ptr_row_pos=manipulator_get_sensor_row_pos(row_pos);
  *ptr_column_pos=manipulator_get_sensor_column_pos(column_pos);
@@ -1529,7 +1533,7 @@ static void sync_task(void const * argument)
  continue;
  }
  APP_LOG_INFO("同步任务收到机械手手臂90°到位信号！\r\n");
- 
+ /*
  if(BSP_is_cup_in_slot_pos()!=JUICE_TRUE)
  {
  juice_set_fault_code(FAULT_CODE_CUP_NOT_EXIST);//果汁杯没有放在杯槽里
@@ -1538,7 +1542,7 @@ static void sync_task(void const * argument)
  continue; 
  }
  APP_LOG_INFO("同步任务收到果杯在榨汁槽信号！\r\n");
- 
+ */
  APP_LOG_INFO("榨汁，发送彩灯闪烁消息！\r\n");
  osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_BLINK_MSG,0); 
 
@@ -1561,6 +1565,7 @@ static void sync_task(void const * argument)
  juice_transaction_fault(); 
  continue;
  }
+ /*
  if(BSP_is_cup_press_ok()!=JUICE_TRUE)
  {
  juice_set_fault_code(FAULT_CODE_CUP_NOT_EXIST);//果汁杯没有按压在杯槽里
@@ -1568,7 +1573,8 @@ static void sync_task(void const * argument)
  juice_transaction_fault(); 
  continue; 
  }
- 
+ */
+ osDelay(2);
  APP_LOG_INFO("榨汁开始，发送彩灯旋转消息！\r\n");
  osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_WHEEL_MSG,0);
  
@@ -1586,7 +1592,9 @@ static void sync_task(void const * argument)
  APP_LOG_INFO("榨汁完成，发送彩灯黄色常亮消息！\r\n");
  osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_YELLOW_MSG,0); 
  
- APP_LOG_INFO("同步任务收到榨汁时间到达信号！\r\n");   
+ APP_LOG_INFO("同步任务收到榨汁时间到达信号！\r\n"); 
+ 
+ osDelay(4);
  APP_LOG_INFO("压杯电机开始释放杯子！\r\n");
  osMessagePut(presser_msg_queue_hdl,PRESSER_UNPRESS_MSG,0);
  signals=juice_wait_signals(PRESSER_REACH_TOP_POS_OK_SIGNAL|PRESSER_REACH_TOP_POS_ERR_SIGNAL,PRESSER_TIMEOUT_VALUE);

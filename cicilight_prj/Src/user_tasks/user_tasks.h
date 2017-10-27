@@ -2,8 +2,8 @@
 #define  __USER_TAKSS_H__
 
 //机械手默认保持的位置
-#define  DEFAULT_ROW_SENSOR_POS                          2//默认机械手位置行
-#define  DEFAULT_COLUMN_SENSOR_POS                       3//默认机械手位置列
+#define  DEFAULT_ROW_SENSOR_POS                          10//默认机械手位置行
+#define  DEFAULT_COLUMN_SENSOR_POS                       8//默认机械手位置列
 //超时定义
 #define  ADC_TIMEOUT_VALUE                               500//adc采样持续时间
 #define  ADC_TASK_RUN_INTERVAL_VALUE                     50  //采样间隔
@@ -65,7 +65,7 @@
 #define  SERVO2_ANGLE_0_MSG                              0
 #define  SERVO2_ANGLE_25_MSG                             25
 #define  SERVO2_ANGLE_90_MSG                             90
-#define  SERVO2_ANGLE_180_MSG                            170
+#define  SERVO2_ANGLE_180_MSG                            180
 #define  JUICE_START_MSG                                 1
 #define  JUICE_STOP_MSG                                  2
 #define  SYNC_START_MSG                                  1
@@ -133,7 +133,7 @@
 #define  ADC_OH_DOOR_OC_THRESHOLD_mAMPERE                 4000//单位mA
 
 #define  ADC_BEMF_DIV                                     8
-#define  ADC_BEMF_THRESHOLD_mVOLTAGE                      1500 //单位mV  
+#define  ADC_BEMF_THRESHOLD_mVOLTAGE                      1000 //单位mV  
 
 /*温度任务*/
 #define  T_WARNING_HIGH                                   30
@@ -157,7 +157,7 @@
 
 //行方向位置点
 #define  SENSOR_POS_IN_ROW_NULL                           0
-#define  SENSOR_POS_IN_ROW_RST                            19
+#define  SENSOR_POS_IN_ROW_RST                            18
 
 #define  SENSOR_POS_IN_ROW_1LOW                           4
 #define  SENSOR_POS_IN_ROW_1                              6            
