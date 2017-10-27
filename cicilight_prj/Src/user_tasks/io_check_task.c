@@ -216,7 +216,7 @@ void io_check_task(void const * argument)
   continue;
   }
   
-   if(strcmp(cmd_str,CMD_PWR_ON_POSITIVE_COLUMN_MOTOR)==0)
+  if(strcmp(cmd_str,CMD_PWR_ON_POSITIVE_COLUMN_MOTOR)==0)
   {
   BSP_column_step_motor_pwr_on_positive();
   APP_LOG_DEBUG("列步进电机正转！\r\n");
@@ -236,6 +236,7 @@ void io_check_task(void const * argument)
   }
   extern osMessageQId servo2_msg_queue_hdl;
   extern osMessageQId servo1_msg_queue_hdl;
+  extern osMessageQId manipulator_msg_queue_hdl;
   if(strcmp(cmd_str,CMD_SERVO1_CLOSE)==0)
   {
   APP_LOG_DEBUG("爪子抓紧！\r\n");
@@ -251,7 +252,7 @@ void io_check_task(void const * argument)
   
   if(strcmp(cmd_str,CMD_SERVO2_25)==0)
   {
-    APP_LOG_DEBUG("机械手臂25°！\r\n");
+  APP_LOG_DEBUG("机械手臂25°！\r\n");
   osMessagePut(servo2_msg_queue_hdl,SERVO2_ANGLE_25_MSG,0);
   continue;
   }
@@ -259,17 +260,22 @@ void io_check_task(void const * argument)
   
  if(strcmp(cmd_str,CMD_SERVO2_90)==0)
   {
-    APP_LOG_DEBUG("机械手臂90°！\r\n");
+  APP_LOG_DEBUG("机械手臂90°！\r\n");
   osMessagePut(servo2_msg_queue_hdl,SERVO2_ANGLE_90_MSG,0);
   continue;
   }
   if(strcmp(cmd_str,CMD_SERVO2_180)==0)
   {
-    APP_LOG_DEBUG("机械手臂180°！\r\n");
+  APP_LOG_DEBUG("机械手臂180°！\r\n");
   osMessagePut(servo2_msg_queue_hdl,SERVO2_ANGLE_180_MSG,0);
   continue;
   }
-  
+  if(strcmp(cmd_str,CMD_MANIPULATOR_GO)==0)
+  {
+  APP_LOG_DEBUG("机械手臂运动！\r\n");
+  osMessagePut(manipulator_msg_queue_hdl,MANIPULATOR_GO_MSG,0);
+  continue;
+  }
   if(strcmp(cmd_str,CMD_GET_TEMPERATURE)==0)
   {
   for(uint8_t i=0;i<5;i++)

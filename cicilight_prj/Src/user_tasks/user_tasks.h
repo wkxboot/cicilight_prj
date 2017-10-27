@@ -11,10 +11,11 @@
 #define  MANIPULATOR_ROW_SENSOR_TIMEOUT_VALUE            30//机械手行传感器抖动超时
 #define  MANIPULATOR_COLUMN_SENSOR_TIMEOUT_VALUE         30//机械手列传感器抖动超时
 #define  MANIPULATOR_INTERVAL_VALUE                      20//机械手传感器采样间隔/运行间隔
+#define  MANIPULATOR_COLUMN_MOTOR_STALL_TIMEOUT          2000//启动2秒后检测   
 #define  MANIPULATOR_START_FREQUENCY                     1 //khz
 #define  MANIPULATOR_EXPIRED_FREQUENCY                   20//khz
 #define  MANIPULATOR_STEP_FREQUENCY                      1 //khz
-#define  MANIPULATOR_STEP_FREQUENCY_TIMEOUT              60//ms
+#define  MANIPULATOR_STEP_FREQUENCY_TIMEOUT              100//ms
 
 #define  PRESSER_INTERVAL_VALUE                          20//压杯电机任务运行间隔
 #define  PRESSER_OC_DELAY_VALUE                          100//压杯电机启动后开始检查过载的延时时间
@@ -64,7 +65,7 @@
 #define  SERVO2_ANGLE_0_MSG                              0
 #define  SERVO2_ANGLE_25_MSG                             25
 #define  SERVO2_ANGLE_90_MSG                             90
-#define  SERVO2_ANGLE_180_MSG                            180
+#define  SERVO2_ANGLE_180_MSG                            170
 #define  JUICE_START_MSG                                 1
 #define  JUICE_STOP_MSG                                  2
 #define  SYNC_START_MSG                                  1
@@ -155,29 +156,30 @@
 #define  NEGATIVE_DIR                                     2
 
 //行方向位置点
-#define  SENSOR_POS_IN_ROW_NULL                           0xff
-#define  SENSOR_POS_IN_ROW_RST                            2
-#define  SENSOR_POS_IN_ROW_1LOW                           3
-#define  SENSOR_POS_IN_ROW_1                              5            
-#define  SENSOR_POS_IN_ROW_2LOW                           7
-#define  SENSOR_POS_IN_ROW_2                              9
-#define  SENSOR_POS_IN_ROW_3LOW                           11
-#define  SENSOR_POS_IN_ROW_3                              13
-#define  SENSOR_POS_IN_ROW_CUP_SLOT                       7//15
-#define  SENSOR_POS_IN_ROW_JUICE_PORT                     9//17
-#define  SENSOR_POS_IN_ROW_STOP                           11//19
+#define  SENSOR_POS_IN_ROW_NULL                           0
+#define  SENSOR_POS_IN_ROW_RST                            19
+
+#define  SENSOR_POS_IN_ROW_1LOW                           4
+#define  SENSOR_POS_IN_ROW_1                              6            
+#define  SENSOR_POS_IN_ROW_2LOW                           8
+#define  SENSOR_POS_IN_ROW_2                              10
+#define  SENSOR_POS_IN_ROW_3LOW                           12
+#define  SENSOR_POS_IN_ROW_3                              14
+#define  SENSOR_POS_IN_ROW_CUP_SLOT                       16
+#define  SENSOR_POS_IN_ROW_JUICE_PORT                     18
+#define  SENSOR_POS_IN_ROW_STOP                           20
 
 //列方向位置点
-#define  SENSOR_POS_IN_COLUMN_NULL                        0xff
-#define  SENSOR_POS_IN_COLUMN_RST                         2
+#define  SENSOR_POS_IN_COLUMN_NULL                        0
+#define  SENSOR_POS_IN_COLUMN_RST                         13
 
-#define  SENSOR_POS_IN_COLUMN_1                           3
-#define  SENSOR_POS_IN_COLUMN_JUICE_PORT                  3
-#define  SENSOR_POS_IN_COLUMN_2                           5
-#define  SENSOR_POS_IN_COLUMN_3                           7
-#define  SENSOR_POS_IN_COLUMN_4                           9
-#define  SENSOR_POS_IN_COLUMN_5                           11
-#define  SENSOR_POS_IN_COLUMN_STOP                        13
+#define  SENSOR_POS_IN_COLUMN_1                           4
+#define  SENSOR_POS_IN_COLUMN_JUICE_PORT                  12
+#define  SENSOR_POS_IN_COLUMN_2                           6
+#define  SENSOR_POS_IN_COLUMN_3                           8
+#define  SENSOR_POS_IN_COLUMN_4                           10
+#define  SENSOR_POS_IN_COLUMN_5                           12
+#define  SENSOR_POS_IN_COLUMN_STOP                        14
 
 //对象状态机
 typedef struct 

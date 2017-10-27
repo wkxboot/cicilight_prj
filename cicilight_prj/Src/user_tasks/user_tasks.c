@@ -554,8 +554,8 @@ static void manipulator_task(void const * argument)
  manipulator.row.sensor_state=SENSOR_STATE_NULL;
  manipulator.row.run_time=0;
  manipulator.column.active=JUICE_FALSE;
- manipulator.column.cur_pos=SENSOR_POS_IN_ROW_NULL;
- manipulator.column.tar_pos=SENSOR_POS_IN_ROW_NULL;
+ manipulator.column.cur_pos=SENSOR_POS_IN_COLUMN_NULL;
+ manipulator.column.tar_pos=SENSOR_POS_IN_COLUMN_NULL;
  manipulator.column.dir=NULL_DIR;
  manipulator.column.detect=JUICE_FALSE;
  manipulator.column.detect_timeout=0;
@@ -584,8 +584,8 @@ static void manipulator_task(void const * argument)
  APP_LOG_INFO("目标位置sensor pos x：%d  y：%d！\r\n",row_sensor_pos,column_sensor_pos);
  if(manipulator.row.tar_pos==SENSOR_POS_IN_ROW_RST && manipulator.column.tar_pos==SENSOR_POS_IN_COLUMN_RST)
  {
- manipulator.row.cur_pos=NULL_POS;
- manipulator.column.cur_pos=NULL_POS;
+ manipulator.row.cur_pos=SENSOR_POS_IN_ROW_NULL;
+ manipulator.column.cur_pos=SENSOR_POS_IN_COLUMN_NULL;
  }
  }
  if(manipulator.row.active==JUICE_TRUE)
@@ -607,7 +607,7 @@ static void manipulator_task(void const * argument)
   if(row_sensor_state!=manipulator.row.sensor_state)//依然不相同
   {
     manipulator.row.sensor_state=row_sensor_state;//更新传感器状态
-   if(manipulator.row.cur_pos!=NULL_POS)//如果已经确定了当前的位置，才可以继续确定当前的位置。只有复位才能第一次确定当前的位置！
+   if(manipulator.row.cur_pos!=SENSOR_POS_IN_ROW_NULL)//如果已经确定了当前的位置，才可以继续确定当前的位置。只有复位才能第一次确定当前的位置！
    {
    if(manipulator.row.dir==POSITIVE_DIR)
    {
@@ -672,7 +672,7 @@ static void manipulator_task(void const * argument)
   if(column_sensor_state!=manipulator.column.sensor_state)//依然不相同
   {
    manipulator.column.sensor_state=column_sensor_state;//更新传感器状态
-   if(manipulator.column.cur_pos!=NULL_POS)//如果已经确定了当前的位置，才可以继续确定当前的位置。只有复位才能第一次确定当前的位置！
+   if(manipulator.column.cur_pos!=SENSOR_POS_IN_COLUMN_NULL)//如果已经确定了当前的位置，才可以继续确定当前的位置。只有复位才能第一次确定当前的位置！
    {
    if(manipulator.column.dir==POSITIVE_DIR)
    {
@@ -695,7 +695,7 @@ static void manipulator_task(void const * argument)
   APP_LOG_DEBUG("列步进电机传感器抖动，忽略位置变动！\r\n"); 
   }
  }
- 
+ manipulator.column.run_time+=MANIPULATOR_INTERVAL_VALUE;
  //列步进电机确定当前运行方向
  if(manipulator.column.tar_pos < manipulator.column.cur_pos && manipulator.column.dir!=NEGATIVE_DIR)
  {
@@ -732,7 +732,9 @@ static void manipulator_task(void const * argument)
  //运动时检测错误
  if(manipulator.row.active==JUICE_TRUE || manipulator.column.active==JUICE_TRUE)
  {
- if((manipulator.column.active==JUICE_TRUE && (juice_is_column_step_motor_stall()==JUICE_TRUE || BSP_is_column_step_motor_fault()==JUICE_TRUE)) ||juice_is_24v_oc()==JUICE_TRUE )
+   
+ if((manipulator.column.active==JUICE_TRUE && manipulator.column.run_time > MANIPULATOR_COLUMN_MOTOR_STALL_TIMEOUT &&\
+   (juice_is_column_step_motor_stall()==JUICE_TRUE || BSP_is_column_step_motor_fault()==JUICE_TRUE)) ||juice_is_24v_oc()==JUICE_TRUE )
  {
   if(juice_is_24v_oc()==JUICE_TRUE)
   {
@@ -749,6 +751,8 @@ static void manipulator_task(void const * argument)
   manipulator.column.dir=NULL_DIR;
   manipulator.row.active=JUICE_FALSE;
   manipulator.column.active=JUICE_FALSE;
+  manipulator.row.run_time=0;
+  manipulator.column.run_time=0;
   APP_LOG_ERROR("行步进电机和列步进电机停机！\r\n"); 
   APP_LOG_ERROR("机械手错误，发送未到达目标位信号！\r\n"); 
   BSP_row_step_motor_pwr_dwn();//停机
@@ -1278,7 +1282,7 @@ static void sync_task(void const * argument)
  }
  APP_LOG_INFO("运行，发送彩灯绿色常亮消息！\r\n");
  osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_GREEN_MSG,0); 
- 
+ /*
  APP_LOG_INFO("检测并准备关闭升降门！\r\n");
  osMessagePut(oh_door_msg_queue_hdl,OH_DOOR_CLOSE_MSG,0);//关闭升降门
  signals=juice_wait_signals(OH_DOOR_REACH_BOT_POS_OK_SIGNAL|OH_DOOR_REACH_BOT_POS_ERR_SIGNAL,OH_DOOR_TIMEOUT_VALUE);
@@ -1297,6 +1301,7 @@ static void sync_task(void const * argument)
  continue;
  }
  APP_LOG_INFO("同步任务收到关闭升降门到位信号！\r\n");
+*/
  APP_LOG_INFO("机械手爪子复位抓紧！\r\n");
  osMessagePut(servo1_msg_queue_hdl,SERVO1_ANGLE_CLOSE_MSG,0);
  signals=juice_wait_signals(SERVO1_REACH_POS_OK_SIGNAL,SERVO1_TIMEOUT_VALUE);
@@ -1746,8 +1751,6 @@ static void manipulator_pwm_frequency(uint8_t stop_signal,uint16_t interval)
 
 static void MX_TIM8_ReInit(uint16_t f)
 {
-  TIM_MasterConfigTypeDef sMasterConfig;
-  TIM_OC_InitTypeDef sConfigOC;
   uint16_t period;
   period=1000/f;
 
@@ -1762,31 +1765,6 @@ static void MX_TIM8_ReInit(uint16_t f)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
-
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim8, &sMasterConfig) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = period/2;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
-  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-  if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-
-  if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-
 }
 
 

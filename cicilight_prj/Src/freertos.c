@@ -138,7 +138,8 @@ void StartDefaultTask(void const * argument)
 
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
-  void app_create_user_tasks(void);
+   void app_create_user_tasks(void);
+   osDelay(2000);//等待上电完毕
    app_create_user_tasks();
   for(;;)
   {

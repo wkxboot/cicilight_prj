@@ -16,7 +16,7 @@
         <LeaveTargetRunning>_ 0</LeaveTargetRunning>
     </JLinkDriver>
     <DebugChecksum>
-        <Checksum>2987393927</Checksum>
+        <Checksum>373522468</Checksum>
     </DebugChecksum>
     <SWOTraceHWSettings>
         <OverrideDefaultClocks>0</OverrideDefaultClocks>
