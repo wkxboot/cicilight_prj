@@ -37,7 +37,7 @@
 #define  CMD_SERVO2_180                         "s2 180"
 
 #define  CMD_MANIPULATOR_GO                     "m g"
-#define  MANIPULATOR_GO_MSG                     (9<<8|7)
+#define  MANIPULATOR_GO_MSG                     (10<<8|8)
 
 #define  CMD_GET_TEMPERATURE                    "get t"
 

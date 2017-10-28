@@ -61,7 +61,7 @@
 #define  COMPRESSOR_OPEN_MSG                             1
 #define  COMPRESSOR_CLOSE_MSG                            2
 #define  SERVO1_ANGLE_OPEN_MSG                           115//时间=177
-#define  SERVO1_ANGLE_CLOSE_MSG                          142//时间=207
+#define  SERVO1_ANGLE_CLOSE_MSG                          152//时间=207
 #define  SERVO2_ANGLE_0_MSG                              0
 #define  SERVO2_ANGLE_25_MSG                             25
 #define  SERVO2_ANGLE_90_MSG                             90
@@ -156,8 +156,8 @@
 #define  NEGATIVE_DIR                                     2
 
 //行方向位置点
-#define  SENSOR_POS_IN_ROW_NULL                           0
-#define  SENSOR_POS_IN_ROW_RST                            18
+#define  SENSOR_POS_IN_ROW_NULL                           0xff
+#define  SENSOR_POS_IN_ROW_RST                            3
 
 #define  SENSOR_POS_IN_ROW_1LOW                           4
 #define  SENSOR_POS_IN_ROW_1                              6            

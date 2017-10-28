@@ -136,8 +136,8 @@ void begin (unsigned int torque, unsigned int gain, unsigned int microsteps)
 	G_DRIVE_REG.IDRIVEN     = 0x00;  //Low Side 100mA peak (sink)
 	G_DRIVE_REG.TDRIVEP     = 0x01;  //High Side gate drive 500nS
 	G_DRIVE_REG.TDRIVEN     = 0x01;  //Low Side Gate Drive 500nS
-	G_DRIVE_REG.OCPDEG      = 0x01;  //OCP Deglitch Time 1uS
-	G_DRIVE_REG.OCPTH       = 0x02;  //OCP Threshold 500mV
+	G_DRIVE_REG.OCPDEG      = 0x03;  //OCP Deglitch Time 8uS
+	G_DRIVE_REG.OCPTH       = 0x00;  //OCP Threshold 250mV
         //1000000001010101
 
 	// STATUS Register
