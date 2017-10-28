@@ -114,7 +114,7 @@ void begin (unsigned int torque, unsigned int gain, unsigned int microsteps)
 	// BLANK Register
 	G_BLANK_REG.Address     = 0x03;
 	G_BLANK_REG.ABT 	= 0x01;  //enable adaptive blanking time
-	G_BLANK_REG.TBLANK 	= 0x08;  //no idea what this should be but the
+	G_BLANK_REG.TBLANK 	= 0x80;  //no idea what this should be but the
         //1000 000 1 00001000            //user guide shows it set to this
 
 	// DECAY Register.
@@ -126,7 +126,7 @@ void begin (unsigned int torque, unsigned int gain, unsigned int microsteps)
 	// STALL Register
 	G_STALL_REG.Address     = 0x05;
 	G_STALL_REG.VDIV 	= 0x02;  //Back EMF is divided by 8
-	G_STALL_REG.SDCNT 	= 0x00;  //stalln asserted after 8 steps
+	G_STALL_REG.SDCNT 	= 0x03;  //stalln asserted after 8 steps
 	G_STALL_REG.SDTHR 	= 0x40;  //default
         //1000111101000000
 
@@ -137,7 +137,7 @@ void begin (unsigned int torque, unsigned int gain, unsigned int microsteps)
 	G_DRIVE_REG.TDRIVEP     = 0x01;  //High Side gate drive 500nS
 	G_DRIVE_REG.TDRIVEN     = 0x01;  //Low Side Gate Drive 500nS
 	G_DRIVE_REG.OCPDEG      = 0x03;  //OCP Deglitch Time 8uS
-	G_DRIVE_REG.OCPTH       = 0x00;  //OCP Threshold 250mV
+	G_DRIVE_REG.OCPTH       = 0x01;  //OCP Threshold 500mV
         //1000000001010101
 
 	// STATUS Register

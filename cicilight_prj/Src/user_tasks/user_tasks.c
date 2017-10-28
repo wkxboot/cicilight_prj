@@ -997,11 +997,11 @@ static void adc_process_sample_average()
  adc_result[3]=BSP_get_temperature(adc_average[ADC_T_IDX]);//温度
  adc_result[4]=adc_average[ADC_BEMF_IDX]*3300*ADC_BEMF_DIV/4096;//BEMF
 #if  1
- APP_LOG_INFO("压杯电流：%d mA！\r\n",adc_result[0]);
- APP_LOG_INFO("升降门电流：%d mA！\r\n",adc_result[1]);
- APP_LOG_INFO("24V电流：%d mA！\r\n",adc_result[2]);
- APP_LOG_INFO("温度值：%d ℃！\r\n",(int16_t)adc_result[3]);
- APP_LOG_INFO("BEMF：%d mV！\r\n",adc_result[4]);
+ APP_LOG_INFO("压杯电流：%d mA.",adc_result[0]);
+ APP_LOG_INFO("升降门电流：%d mA.",adc_result[1]);
+ APP_LOG_INFO("24V电流：%d mA.",adc_result[2]);
+ APP_LOG_INFO("温度值：%d ℃.",(int16_t)adc_result[3]);
+ APP_LOG_INFO("BEMF：%d mV.\r\n",adc_result[4]);
 #endif
 }
  
@@ -1040,8 +1040,7 @@ static uint8_t juice_is_column_step_motor_stall()//bemf 反向电动势
 {
  if(adc_result[4] < ADC_BEMF_THRESHOLD_mVOLTAGE)
  {
- return JUICE_FALSE;
- APP_LOG_ERROR("60步进电机堵转：%d mA！\r\n",adc_result[4]);
+ APP_LOG_ERROR("60步进电机堵转：%d mV！\r\n",adc_result[4]);
  return JUICE_TRUE;
  }
  return JUICE_FALSE;

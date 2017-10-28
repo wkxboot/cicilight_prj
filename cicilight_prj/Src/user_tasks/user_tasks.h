@@ -5,8 +5,8 @@
 #define  DEFAULT_ROW_SENSOR_POS                          10//默认机械手位置行
 #define  DEFAULT_COLUMN_SENSOR_POS                       8//默认机械手位置列
 //超时定义
-#define  ADC_TIMEOUT_VALUE                               500//adc采样持续时间
-#define  ADC_TASK_RUN_INTERVAL_VALUE                     50  //采样间隔
+#define  ADC_TIMEOUT_VALUE                               250//adc采样持续时间
+#define  ADC_TASK_RUN_INTERVAL_VALUE                     25 //采样间隔
 #define  MANIPULATOR_TIMEOUT_VALUE                       30000//机械手到达目标位置超时时间
 #define  MANIPULATOR_ROW_SENSOR_TIMEOUT_VALUE            30//机械手行传感器抖动超时
 #define  MANIPULATOR_COLUMN_SENSOR_TIMEOUT_VALUE         30//机械手列传感器抖动超时
