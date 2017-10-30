@@ -77,13 +77,13 @@ typedef struct
 
 #define  REG_VALUE_MIN_T_SETTING             4
 #define  REG_VALUE_MAX_T_SETTING             10
-#define  REG_VALUE_DEFAULT_T_SETTING         28//默认温度设置
+#define  REG_VALUE_DEFAULT_T_SETTING         6//默认温度设置
 #define  REG_VALUE_MIN_T_INCREASE            1
 #define  REG_VALUE_MAX_T_INCREASE            4
 #define  REG_VALUE_DEFAULT_T_INCREASE        4
 #define  REG_VALUE_MIN_T_DECREASE            1
 #define  REG_VALUE_MAX_T_DECREASE            4
-#define  REG_VALUE_DEFAULT_T_DECREASE        4
+#define  REG_VALUE_DEFAULT_T_DECREASE        1
 /********输入寄存器的取值*************************/
 //当前版本 1.0.0.48
 #define  REG_VALUE_FIRMWARE_VERSION_1        1

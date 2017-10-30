@@ -244,25 +244,25 @@ static void rgb_led_task(void const * argument)
   color_idx=0;
   msg_hold=JUICE_FALSE;
  }
- if(msg_v==RGB_LED_BLINK_MSG )
+ if(msg_v==RGB_LED_INDICATE_MSG )
  { 
   if(msg_hold==JUICE_FALSE)
   {
   msg_hold=JUICE_TRUE;
-  APP_LOG_INFO("RGB LED闪烁消息！\r\n");
+  APP_LOG_INFO("RGB LED黄色常亮指示消息，即将榨汁！\r\n");
   }
   single_color(RGB_LED_YELLOW_COLOR,255);
   osDelay(RGB_LED_BLINK_DELAY_VALUE);
   single_color(RGB_LED_BLACK_COLOR,255);
   osDelay(RGB_LED_BLINK_DELAY_VALUE); 
  }
- else if(msg_v==RGB_LED_WHEEL_MSG)
+ else if(msg_v==RGB_LED_RAINBOW_MSG)
  {
   if(msg_hold==JUICE_FALSE)
   {
   msg_hold=JUICE_TRUE;
   single_color(RGB_LED_BLACK_COLOR,255);//黑色
-  APP_LOG_INFO("RGB LED旋转消息！\r\n");
+  APP_LOG_INFO("RGB LED瀑布雨消息！\r\n");
   }
   overwrite_color(wheel_color[color_idx],pos,255);
   pos++;
@@ -281,34 +281,44 @@ static void rgb_led_task(void const * argument)
   
   osDelay(RGB_LED_OVERWRITE_DELAY_VALUE);                  
  }
- else if(msg_v==RGB_LED_YELLOW_MSG)
+ else if(msg_v==RGB_LED_OK_MSG)
  {
   if(msg_hold==JUICE_FALSE)
   {
   msg_hold=JUICE_TRUE;
-  APP_LOG_INFO("RGB LED 榨汁完成黄色常亮消息！\r\n");
+  APP_LOG_INFO("RGB LED 榨汁完成蓝常亮消息！\r\n");
   }
-  single_color(RGB_LED_YELLOW_COLOR,255);
+  single_color(RGB_LED_BLUE_COLOR,255);
   osDelay(RGB_LED_INTERVAL_VALUE);   
  }
- else if(msg_v==RGB_LED_WHITE_MSG)
+ else if(msg_v==RGB_LED_STANDBY_MSG)
  {
   if(msg_hold==JUICE_FALSE)
   {
   msg_hold=JUICE_TRUE;
-  APP_LOG_INFO("RGB LED 待机白色常亮消息！\r\n");
+  APP_LOG_INFO("RGB LED 待机黄色常亮消息！\r\n");
   }
   single_color(RGB_LED_WHITE_COLOR,255);
   osDelay(RGB_LED_INTERVAL_VALUE);   
  }
- else if(msg_v==RGB_LED_GREEN_MSG)
+ else if(msg_v==RGB_LED_MOTION_MSG)
  {
   if(msg_hold==JUICE_FALSE)
   {
   msg_hold=JUICE_TRUE;
-  APP_LOG_INFO("RGB LED 运行绿色常亮消息！\r\n");
+  APP_LOG_INFO("RGB LED 绿色运动常亮消息！\r\n");
   }
   single_color(RGB_LED_GREEN_COLOR,255);
+  osDelay(RGB_LED_INTERVAL_VALUE);   
+ }
+ else if(msg_v==RGB_LED_ERROR_MSG)
+ {
+  if(msg_hold==JUICE_FALSE)
+  {
+  msg_hold=JUICE_TRUE;
+  APP_LOG_INFO("RGB LED 红色错误常亮消息！\r\n");
+  }
+  single_color(RGB_LED_RED_COLOR,255);
   osDelay(RGB_LED_INTERVAL_VALUE);   
  }
  else if(msg_v==RGB_LED_CLOSE_MSG)
@@ -942,7 +952,7 @@ static void juice_task(void const * argument)
  {
   BSP_juicing_motor_pwr_on(); 
   APP_LOG_INFO("榨汁开始！打开榨汁电机！\r\n");
-  while(timeout<JUICING_TIMEOUT_VALUE-10000)
+  while(timeout<JUICING_TIMEOUT_VALUE-5000)
   {
   msg= osMessageGet(juice_msg_queue_hdl,0); 
   if(msg.status==osEventMessage && msg.value.v == JUICE_STOP_MSG)
@@ -997,10 +1007,10 @@ static void adc_process_sample_average()
  adc_result[3]=BSP_get_temperature(adc_average[ADC_T_IDX]);//温度
  adc_result[4]=adc_average[ADC_BEMF_IDX]*3300*ADC_BEMF_DIV/4096;//BEMF
 #if  1
- APP_LOG_INFO("压杯电流：%d mA.",adc_result[0]);
- APP_LOG_INFO("升降门电流：%d mA.",adc_result[1]);
- APP_LOG_INFO("24V电流：%d mA.",adc_result[2]);
- APP_LOG_INFO("温度值：%d ℃.",(int16_t)adc_result[3]);
+ APP_LOG_INFO("压杯电流：%d mA.\r\n",adc_result[0]);
+ APP_LOG_INFO("升降门电流：%d mA.\r\n",adc_result[1]);
+ APP_LOG_INFO("24V电流：%d mA.\r\n",adc_result[2]);
+ APP_LOG_INFO("温度值：%d ℃.\r\n",(int16_t)adc_result[3]);
  APP_LOG_INFO("BEMF：%d mV.\r\n",adc_result[4]);
 #endif
 }
@@ -1263,7 +1273,7 @@ static void sync_task(void const * argument)
  while(1)
  {
  APP_LOG_INFO("待机，发送彩灯白色常亮消息！\r\n");
- osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_WHITE_MSG,0);
+ osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_STANDBY_MSG,0);
  APP_LOG_INFO("榨汁同步任务空闲中...准备睡眠，等待榨汁信号！\r\n");
  msg= osMessageGet(sync_msg_queue_hdl,osWaitForever);
  if(msg.status!=osEventMessage || (msg.status==osEventMessage && msg.value.v!=SYNC_START_MSG))
@@ -1285,7 +1295,7 @@ static void sync_task(void const * argument)
  continue;
  }
  APP_LOG_INFO("运行，发送彩灯绿色常亮消息！\r\n");
- osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_GREEN_MSG,0); 
+ osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_MOTION_MSG,0); 
  /*
  APP_LOG_INFO("检测并准备关闭升降门！\r\n");
  osMessagePut(oh_door_msg_queue_hdl,OH_DOOR_CLOSE_MSG,0);//关闭升降门
@@ -1543,12 +1553,13 @@ static void sync_task(void const * argument)
  }
  APP_LOG_INFO("同步任务收到果杯在榨汁槽信号！\r\n");
  */
- APP_LOG_INFO("榨汁，发送彩灯闪烁消息！\r\n");
- osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_BLINK_MSG,0); 
+ APP_LOG_INFO("即将榨汁，发送提示即将榨汁闪烁消息！\r\n");
+ osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_INDICATE_MSG,0); 
  
  APP_LOG_INFO("机械手向默认停止位置运动！\r\n");
  osMessagePut(manipulator_msg_queue_hdl,DEFAULT_ROW_SENSOR_POS<<8|DEFAULT_COLUMN_SENSOR_POS,0);//不再处理机械手的状态,已经不能影响榨汁交易，但出错有错误码
  
+ /*
  APP_LOG_INFO("压杯电机开始压杯！\r\n");
  osMessagePut(presser_msg_queue_hdl,PRESSER_PRESS_MSG,0);
  signals=juice_wait_signals(PRESSER_REACH_BOT_POS_OK_SIGNAL|PRESSER_REACH_BOT_POS_ERR_SIGNAL,PRESSER_TIMEOUT_VALUE);
@@ -1567,6 +1578,9 @@ static void sync_task(void const * argument)
  continue;
  }
 
+*/
+
+
  /*
  if(BSP_is_cup_press_ok()!=JUICE_TRUE)
  {
@@ -1577,9 +1591,10 @@ static void sync_task(void const * argument)
  }
  */
  
+ /*
  osDelay(2000);
- APP_LOG_INFO("榨汁开始，发送彩灯旋转消息！\r\n");
- osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_WHEEL_MSG,0);
+ APP_LOG_INFO("榨汁开始，发送彩灯榨汁消息！\r\n");
+ osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_JUICING_MSG,0);
  
  APP_LOG_INFO("同步任务收到压杯到达下限位点信号！\r\n");
  APP_LOG_INFO("榨汁电机启动工作！\r\n");  
@@ -1592,12 +1607,12 @@ static void sync_task(void const * argument)
  juice_transaction_fault();
  continue;
  }  
- APP_LOG_INFO("榨汁完成，发送彩灯黄色常亮消息！\r\n");
- osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_YELLOW_MSG,0); 
+ APP_LOG_INFO("榨汁完成，发送彩灯完成消息！\r\n");
+ osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_OK_MSG,0); 
  
  APP_LOG_INFO("同步任务收到榨汁时间到达信号！\r\n"); 
  
- osDelay(4000);
+ osDelay(2000);
  APP_LOG_INFO("压杯电机开始释放杯子！\r\n");
  osMessagePut(presser_msg_queue_hdl,PRESSER_UNPRESS_MSG,0);
  signals=juice_wait_signals(PRESSER_REACH_TOP_POS_OK_SIGNAL|PRESSER_REACH_TOP_POS_ERR_SIGNAL,PRESSER_TIMEOUT_VALUE);
@@ -1617,7 +1632,7 @@ static void sync_task(void const * argument)
  }   
  APP_LOG_INFO("同步任务收到压杯到达上限位点信号！\r\n");  
  
- /*
+ 
  APP_LOG_INFO("打开升降门！\r\n");
  osMessagePut(oh_door_msg_queue_hdl,OH_DOOR_OPEN_MSG,0);
  signals=juice_wait_signals(OH_DOOR_REACH_TOP_POS_OK_SIGNAL|OH_DOOR_REACH_TOP_POS_ERR_SIGNAL,OH_DOOR_TIMEOUT_VALUE);
@@ -1638,6 +1653,9 @@ static void sync_task(void const * argument)
  APP_LOG_INFO("同步任务收到升降门到达上限位点信号！\r\n");
  
  juice_transaction_completed();//设置进度为交易成功
+ 
+*/
+/*
  while(cup_timeout<CUP_TIMEOUT_VALUE)//检测果汁杯是否被取走，或者超时未取走
  {
   if(BSP_is_cup_in_slot_pos()==JUICE_FALSE)
@@ -1659,7 +1677,10 @@ static void sync_task(void const * argument)
  cup_timeout+=CUP_DETECT_INTERVAL_VALUE;
  }
  cup_timeout=0;
+ */
  
+ /*
+ osDelay(5000);
  APP_LOG_INFO("关闭升降门！\r\n");
  osMessagePut(oh_door_msg_queue_hdl,OH_DOOR_CLOSE_MSG,0);
  signals=juice_wait_signals(OH_DOOR_REACH_BOT_POS_OK_SIGNAL|OH_DOOR_REACH_BOT_POS_ERR_SIGNAL,OH_DOOR_TIMEOUT_VALUE);
@@ -1678,6 +1699,9 @@ static void sync_task(void const * argument)
  continue;
  } 
  APP_LOG_INFO("同步任务收到升降门到达下限位点信号！\r\n");
+ 
+*/
+ /*
  if(BSP_is_cup_in_slot_pos()==JUICE_TRUE)
  {
  juice_set_fault_code(FAULT_CODE_CUP_NOT_TAKE_AWAY);

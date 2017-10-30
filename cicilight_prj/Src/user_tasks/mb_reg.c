@@ -372,13 +372,13 @@ static uint8_t write_debug_cmd_handle(uint8_t *ptr_buff)
  
  if(buff[1]==REG_VALUE_RGB_LED_OPEN)
  {
-  if(osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_YELLOW_MSG,0)!=osOK)
+  if(osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_STANDBY_MSG,0)!=osOK)
   {
   ret=JUICE_FALSE;
-  APP_LOG_INFO("向RGB_LED任务发送开灯消息失败！\r\n"); 
+  APP_LOG_INFO("向RGB_LED任务发送开待机灯消息失败！\r\n"); 
   return ret;
   }
-  APP_LOG_INFO("向RGB_LED任务发送开灯消息成功！\r\n"); 
+  APP_LOG_INFO("向RGB_LED任务发送开待机灯消息成功！\r\n"); 
  }
  else
  {

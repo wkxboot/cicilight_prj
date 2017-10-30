@@ -8,9 +8,9 @@
 #define  ADC_TIMEOUT_VALUE                               250//adc采样持续时间
 #define  ADC_TASK_RUN_INTERVAL_VALUE                     25 //采样间隔
 #define  MANIPULATOR_TIMEOUT_VALUE                       30000//机械手到达目标位置超时时间
-#define  MANIPULATOR_ROW_SENSOR_TIMEOUT_VALUE            30//机械手行传感器抖动超时
-#define  MANIPULATOR_COLUMN_SENSOR_TIMEOUT_VALUE         30//机械手列传感器抖动超时
-#define  MANIPULATOR_INTERVAL_VALUE                      20//机械手传感器采样间隔/运行间隔
+#define  MANIPULATOR_ROW_SENSOR_TIMEOUT_VALUE            10//机械手行传感器抖动超时
+#define  MANIPULATOR_COLUMN_SENSOR_TIMEOUT_VALUE         10//机械手列传感器抖动超时
+#define  MANIPULATOR_INTERVAL_VALUE                      10//机械手传感器采样间隔/运行间隔
 #define  MANIPULATOR_COLUMN_MOTOR_STALL_TIMEOUT          2000//启动2秒后检测   
 #define  MANIPULATOR_START_FREQUENCY                     1 //khz
 #define  MANIPULATOR_EXPIRED_FREQUENCY                   20//khz
@@ -48,11 +48,13 @@
 #define  JUICE_WHEEL_COLOR_CNT                           6//旋转时颜色数量
 /*消息*/
 #define  NULL_MSG                                        0
-#define  RGB_LED_BLINK_MSG                               1
-#define  RGB_LED_WHEEL_MSG                               2
-#define  RGB_LED_WHITE_MSG                               3
-#define  RGB_LED_YELLOW_MSG                              4
-#define  RGB_LED_GREEN_MSG                               5
+#define  RGB_LED_RAINBOW_MSG                             1
+#define  RGB_LED_INDICATE_MSG                            2
+#define  RGB_LED_JUICING_MSG                             3
+#define  RGB_LED_MOTION_MSG                              4
+#define  RGB_LED_STANDBY_MSG                             5
+#define  RGB_LED_OK_MSG                                  6
+#define  RGB_LED_ERROR_MSG                               7
 #define  RGB_LED_CLOSE_MSG                               6
 #define  OH_DOOR_CLOSE_MSG                               1
 #define  OH_DOOR_OPEN_MSG                                2
@@ -129,7 +131,7 @@
 #define  OC_SCALE                                         10//运放比例
 #define  RES_VALUE                                        5 //单位0.01欧姆
 #define  ADC_24V_OC_THRESHOLD_mAMPERE                     6000//单位mA
-#define  ADC_PRESSER_OC_THRESHOLD_mAMPERE                 1300//单位mA，堵转实测1300mA
+#define  ADC_PRESSER_OC_THRESHOLD_mAMPERE                 1350//单位mA，堵转实测1350mA
 #define  ADC_OH_DOOR_OC_THRESHOLD_mAMPERE                 4000//单位mA
 
 #define  ADC_BEMF_DIV                                     8

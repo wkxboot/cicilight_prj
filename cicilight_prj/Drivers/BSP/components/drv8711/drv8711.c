@@ -114,13 +114,13 @@ void begin (unsigned int torque, unsigned int gain, unsigned int microsteps)
 	// BLANK Register
 	G_BLANK_REG.Address     = 0x03;
 	G_BLANK_REG.ABT 	= 0x01;  //enable adaptive blanking time
-	G_BLANK_REG.TBLANK 	= 0x80;  //no idea what this should be but the
+	G_BLANK_REG.TBLANK 	= 0x80;//0x80;  //no idea what this should be but the
         //1000 000 1 00001000            //user guide shows it set to this
 
 	// DECAY Register.
 	G_DECAY_REG.Address     = 0x04;
 	G_DECAY_REG.DECMOD      = 0x01;  //mixed decay
-	G_DECAY_REG.TDECAY      = 0x80;  //default
+	G_DECAY_REG.TDECAY      = 0x10;  //default
         //1000001100010000
 
 	// STALL Register
