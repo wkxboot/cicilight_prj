@@ -1578,7 +1578,7 @@ static void sync_task(void const * argument)
  APP_LOG_INFO("机械手向默认停止位置运动！\r\n");
  osMessagePut(manipulator_msg_queue_hdl,DEFAULT_ROW_SENSOR_POS<<8|DEFAULT_COLUMN_SENSOR_POS,0);//不再处理机械手的状态,已经不能影响榨汁交易，但出错有错误码
  
- /*
+ 
  APP_LOG_INFO("压杯电机开始压杯！\r\n");
  osMessagePut(presser_msg_queue_hdl,PRESSER_PRESS_MSG,0);
  signals=juice_wait_signals(PRESSER_REACH_BOT_POS_OK_SIGNAL|PRESSER_REACH_BOT_POS_ERR_SIGNAL,PRESSER_TIMEOUT_VALUE);
@@ -1597,7 +1597,6 @@ static void sync_task(void const * argument)
  continue;
  }
 
-*/
 
 
  /*
@@ -1610,7 +1609,6 @@ static void sync_task(void const * argument)
  }
  */
  
- /*
  osDelay(2000);
  APP_LOG_INFO("榨汁开始，发送彩灯榨汁消息！\r\n");
  osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_JUICING_MSG,0);
@@ -1673,7 +1671,6 @@ static void sync_task(void const * argument)
  
  juice_transaction_completed();//设置进度为交易成功
  
-*/
 /*
  while(cup_timeout<CUP_TIMEOUT_VALUE)//检测果汁杯是否被取走，或者超时未取走
  {

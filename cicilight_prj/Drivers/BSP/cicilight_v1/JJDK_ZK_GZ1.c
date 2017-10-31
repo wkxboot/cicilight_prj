@@ -43,7 +43,7 @@ void BSP_column_step_motor_init()
   osDelay(2);  
   HAL_GPIO_WritePin(BSP_COLUMN_STEP_MOTOR_SLEEP_POS_GPIO_Port,BSP_COLUMN_STEP_MOTOR_SLEEP_POS_Pin, BSP_COLUMN_STEP_MOTOR_SLEEP_ENABLE_PIN_STATE);   
   osDelay(2);
-  begin(50, 5, 64) ; 
+  begin(30, 5, 32) ; 
   get_status();
   set_enable();
 }

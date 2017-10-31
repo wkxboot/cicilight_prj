@@ -13,9 +13,9 @@
 #define  MANIPULATOR_INTERVAL_VALUE                      10//机械手传感器采样间隔/运行间隔
 #define  MANIPULATOR_COLUMN_MOTOR_STALL_TIMEOUT          1500//启动1.5秒后检测   
 #define  MANIPULATOR_START_FREQUENCY                     1 //khz
-#define  MANIPULATOR_EXPIRED_FREQUENCY                   12//khz
+#define  MANIPULATOR_EXPIRED_FREQUENCY                   20//khz
 #define  MANIPULATOR_STEP_FREQUENCY                      1 //khz
-#define  MANIPULATOR_STEP_FREQUENCY_TIMEOUT              100//ms
+#define  MANIPULATOR_STEP_FREQUENCY_TIMEOUT              70//ms
 
 #define  PRESSER_INTERVAL_VALUE                          20//压杯电机任务运行间隔
 #define  PRESSER_OC_DELAY_VALUE                          100//压杯电机启动后开始检查过载的延时时间
@@ -135,7 +135,7 @@
 #define  ADC_OH_DOOR_OC_THRESHOLD_mAMPERE                 4000//单位mA
 
 #define  ADC_BEMF_DIV                                     8
-#define  ADC_BEMF_THRESHOLD_mVOLTAGE                      1000 //单位mV  
+#define  ADC_BEMF_THRESHOLD_mVOLTAGE                      10 //单位mV  
 
 /*温度任务*/
 #define  T_WARNING_HIGH                                   30

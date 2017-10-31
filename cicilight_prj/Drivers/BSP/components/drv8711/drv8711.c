@@ -119,7 +119,7 @@ void begin (unsigned int torque, unsigned int gain, unsigned int microsteps)
 
 	// DECAY Register.
 	G_DECAY_REG.Address     = 0x04;
-	G_DECAY_REG.DECMOD      = 0x01;  //mixed decay
+	G_DECAY_REG.DECMOD      = 0x03;  //mixed decay
 	G_DECAY_REG.TDECAY      = 0x10;  //default
         //1000001100010000
 
