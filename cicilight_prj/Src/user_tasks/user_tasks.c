@@ -256,13 +256,22 @@ static void rgb_led_task(void const * argument)
   single_color(RGB_LED_BLACK_COLOR,255);
   osDelay(RGB_LED_BLINK_DELAY_VALUE); 
  }
- else if(msg_v==RGB_LED_RAINBOW_MSG)
+ if(msg_v==RGB_LED_RAINBOW_MSG )
+ { 
+  if(msg_hold==JUICE_FALSE)
+  {
+  msg_hold=JUICE_TRUE;
+  APP_LOG_INFO("RGB LED瀑布雨消息！\r\n");
+  }
+  rainbow(10); 
+ }
+ else if(msg_v==RGB_LED_JUICING_MSG)
  {
   if(msg_hold==JUICE_FALSE)
   {
   msg_hold=JUICE_TRUE;
   single_color(RGB_LED_BLACK_COLOR,255);//黑色
-  APP_LOG_INFO("RGB LED瀑布雨消息！\r\n");
+  APP_LOG_INFO("RGB LED榨汁消息！\r\n");
   }
   overwrite_color(wheel_color[color_idx],pos,255);
   pos++;
@@ -298,7 +307,7 @@ static void rgb_led_task(void const * argument)
   msg_hold=JUICE_TRUE;
   APP_LOG_INFO("RGB LED 待机黄色常亮消息！\r\n");
   }
-  single_color(RGB_LED_WHITE_COLOR,255);
+  single_color(RGB_LED_YELLOW_COLOR,255);
   osDelay(RGB_LED_INTERVAL_VALUE);   
  }
  else if(msg_v==RGB_LED_MOTION_MSG)
@@ -331,7 +340,17 @@ static void rgb_led_task(void const * argument)
   single_color(RGB_LED_BLACK_COLOR,255);
   osDelay(RGB_LED_INTERVAL_VALUE);   
  }
+ else if(msg_v==NULL_MSG)
+ {
+  if(msg_hold==JUICE_FALSE)
+  {
+  msg_hold=JUICE_TRUE;
+  APP_LOG_INFO("RGB LED 空消息！\r\n");
+  }
+  single_color(RGB_LED_BLACK_COLOR,255);
+  osDelay(RGB_LED_INTERVAL_VALUE); 
  }
+}
 }
 
 static void running_led_task(void const * argument)
@@ -1272,7 +1291,7 @@ static void sync_task(void const * argument)
  APP_LOG_INFO("++++++榨汁同步任务开始！\r\n");
  while(1)
  {
- APP_LOG_INFO("待机，发送彩灯白色常亮消息！\r\n");
+ APP_LOG_INFO("待机，发送彩灯黄色常亮消息！\r\n");
  osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_STANDBY_MSG,0);
  APP_LOG_INFO("榨汁同步任务空闲中...准备睡眠，等待榨汁信号！\r\n");
  msg= osMessageGet(sync_msg_queue_hdl,osWaitForever);

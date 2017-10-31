@@ -11,9 +11,9 @@
 #define  MANIPULATOR_ROW_SENSOR_TIMEOUT_VALUE            10//机械手行传感器抖动超时
 #define  MANIPULATOR_COLUMN_SENSOR_TIMEOUT_VALUE         10//机械手列传感器抖动超时
 #define  MANIPULATOR_INTERVAL_VALUE                      10//机械手传感器采样间隔/运行间隔
-#define  MANIPULATOR_COLUMN_MOTOR_STALL_TIMEOUT          2000//启动2秒后检测   
+#define  MANIPULATOR_COLUMN_MOTOR_STALL_TIMEOUT          1500//启动1.5秒后检测   
 #define  MANIPULATOR_START_FREQUENCY                     1 //khz
-#define  MANIPULATOR_EXPIRED_FREQUENCY                   20//khz
+#define  MANIPULATOR_EXPIRED_FREQUENCY                   12//khz
 #define  MANIPULATOR_STEP_FREQUENCY                      1 //khz
 #define  MANIPULATOR_STEP_FREQUENCY_TIMEOUT              100//ms
 
@@ -55,7 +55,7 @@
 #define  RGB_LED_STANDBY_MSG                             5
 #define  RGB_LED_OK_MSG                                  6
 #define  RGB_LED_ERROR_MSG                               7
-#define  RGB_LED_CLOSE_MSG                               6
+#define  RGB_LED_CLOSE_MSG                               8
 #define  OH_DOOR_CLOSE_MSG                               1
 #define  OH_DOOR_OPEN_MSG                                2
 #define  PRESSER_PRESS_MSG                               1
