@@ -140,7 +140,7 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pins : PDPin PDPin */
   GPIO_InitStruct.Pin = BSP_COLUMN_STEP_MOTOR_FAULT_POS_Pin|BSP_COLUMN_STEP_MOTOR_STALL_POS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PCPin PCPin */

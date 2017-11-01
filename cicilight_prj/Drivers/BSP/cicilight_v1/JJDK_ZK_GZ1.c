@@ -43,7 +43,7 @@ void BSP_column_step_motor_init()
   osDelay(2);  
   HAL_GPIO_WritePin(BSP_COLUMN_STEP_MOTOR_SLEEP_POS_GPIO_Port,BSP_COLUMN_STEP_MOTOR_SLEEP_POS_Pin, BSP_COLUMN_STEP_MOTOR_SLEEP_ENABLE_PIN_STATE);   
   osDelay(2);
-  begin(30, 5, 32) ; 
+  begin(35, 5, 64); 
   get_status();
   set_enable();
 }
@@ -192,13 +192,14 @@ uint8_t BSP_is_column_step_motor_fault()//只检测OCP和OTP错误
  GPIO_PinState pinstate;
  uint8_t ret=JUICE_FALSE;
  
- return JUICE_FALSE;
  pinstate= HAL_GPIO_ReadPin(BSP_COLUMN_STEP_MOTOR_FAULT_POS_GPIO_Port,BSP_COLUMN_STEP_MOTOR_FAULT_POS_Pin);
  if( pinstate == BSP_COLUMN_STEP_MOTOR_FAULT_PIN_STATE)
  {
+  APP_LOG_ERROR("8711 Fault！\r\n");
   ReadAllRegisters();
  if(G_STATUS_REG.AOCP || G_STATUS_REG.BOCP ||G_STATUS_REG.OTS)
  {
+ APP_LOG_ERROR("8711 OCP or OTS 错误！\r\n");
  ret= JUICE_TRUE;
  BSP_column_step_motor_init();
  }

@@ -2,20 +2,20 @@
 #define  __USER_TAKSS_H__
 
 //机械手默认保持的位置
-#define  DEFAULT_ROW_SENSOR_POS                          10//默认机械手位置行
-#define  DEFAULT_COLUMN_SENSOR_POS                       8//默认机械手位置列
+#define  DEFAULT_ROW_SENSOR_POS                          10//默认机械手位置行2
+#define  DEFAULT_COLUMN_SENSOR_POS                       8 //默认机械手位置列3
 //超时定义
 #define  ADC_TIMEOUT_VALUE                               250//adc采样持续时间
 #define  ADC_TASK_RUN_INTERVAL_VALUE                     25 //采样间隔
-#define  MANIPULATOR_TIMEOUT_VALUE                       30000//机械手到达目标位置超时时间
-#define  MANIPULATOR_ROW_SENSOR_TIMEOUT_VALUE            10//机械手行传感器抖动超时
-#define  MANIPULATOR_COLUMN_SENSOR_TIMEOUT_VALUE         10//机械手列传感器抖动超时
+#define  MANIPULATOR_TIMEOUT_VALUE                       30000//机械手到达目标位置超时时间 暂定
+#define  MANIPULATOR_ROW_SENSOR_TIMEOUT_VALUE            20//机械手行传感器抖动超时
+#define  MANIPULATOR_COLUMN_SENSOR_TIMEOUT_VALUE         80//机械手列传感器抖动超时
 #define  MANIPULATOR_INTERVAL_VALUE                      10//机械手传感器采样间隔/运行间隔
-#define  MANIPULATOR_COLUMN_MOTOR_STALL_TIMEOUT          1500//启动1.5秒后检测   
+#define  MANIPULATOR_COLUMN_MOTOR_STALL_TIMEOUT          1000//启动1.0秒后检测   
 #define  MANIPULATOR_START_FREQUENCY                     1 //khz
 #define  MANIPULATOR_EXPIRED_FREQUENCY                   20//khz
-#define  MANIPULATOR_STEP_FREQUENCY                      1 //khz
-#define  MANIPULATOR_STEP_FREQUENCY_TIMEOUT              70//ms
+#define  MANIPULATOR_STEP_FREQUENCY                      2 //khz
+#define  MANIPULATOR_STEP_FREQUENCY_TIMEOUT              10//ms
 
 #define  PRESSER_INTERVAL_VALUE                          20//压杯电机任务运行间隔
 #define  PRESSER_OC_DELAY_VALUE                          100//压杯电机启动后开始检查过载的延时时间
@@ -24,9 +24,9 @@
 #define  COMPRESSOR_TOMEOUT_VALUE                        5000//手动操作压缩机时，受控时间
 
 #define  RGB_LED_SECTION_DELAY_VALUE                     0   //每段灯亮起之间的等待时间
-#define  RGB_LED_BLINK_DELAY_VALUE                       350 //全部灯闪烁的间隔时间
+#define  RGB_LED_BLINK_DELAY_VALUE                       300 //全部灯闪烁的间隔时间
 #define  RGB_LED_OVERWRITE_DELAY_VALUE                   30  //后一个灯亮起需要等待的时间
-#define  RGB_LED_INTERVAL_VALUE                          500 //RGB LED空闲时运行间隔时间
+#define  RGB_LED_INTERVAL_VALUE                          100 //RGB LED空闲时运行间隔时间
 
 #define  JUICING_TIMEOUT_VALUE                           15000//榨汁15s
 #define  JUICE_INTERVAL_VALUE                            20//榨汁任务运行间隔
@@ -34,7 +34,7 @@
 #define  OH_DOOR_INTERVAL_VALUE                          20//升降门任务运行间隔
 #define  OH_DOOR_OC_DELAY_VALUE                          200//升降门在电机启动后开始检查过载的延时时间
 #define  OH_DOOR_DETECT_TIMEOUT_VALUE                    5000//5秒钟后再次尝试关门
-#define  OH_DOOR_TIMEOUT_VALUE                           16000//16秒操作取杯超时
+#define  OH_DOOR_TIMEOUT_VALUE                           16000//16秒升降门操作超时 暂定
 #define  SERVO1_ENABLE_TIME_VALUE                        1000//舵机1工作使能时间
 #define  SERVO1_TIMEOUT_VALUE                            2000//舵机1工作超时时间
 #define  SERVO2_ENABLE_TIME_VALUE                        1000//舵机2工作使能时间
@@ -122,9 +122,9 @@
 //ADC任务
 #define  ADC_CNT                                          5
 
-#define  ADC_PRESSER_IDX                                  0//
+#define  ADC_PRESSER_IDX                                  0
 #define  ADC_OH_DOOR_IDX                                  1
-#define  ADC_24V_IDX                                      2//
+#define  ADC_24V_IDX                                      2
 #define  ADC_T_IDX                                        3
 #define  ADC_BEMF_IDX                                     4
 
@@ -135,7 +135,7 @@
 #define  ADC_OH_DOOR_OC_THRESHOLD_mAMPERE                 4000//单位mA
 
 #define  ADC_BEMF_DIV                                     8
-#define  ADC_BEMF_THRESHOLD_mVOLTAGE                      10 //单位mV  
+#define  ADC_BEMF_THRESHOLD_mVOLTAGE                      800 //单位mV  
 
 /*温度任务*/
 #define  T_WARNING_HIGH                                   30
@@ -191,6 +191,7 @@ typedef struct
  uint8_t tar_pos;
  uint8_t active;
  uint8_t sensor_state;
+ uint8_t sensor_hold_time;
  uint8_t detect;
  uint16_t detect_timeout;
  uint32_t run_time;

@@ -10,6 +10,7 @@
 #include "user_tasks.h"
 #include "rgb_led.h"
 #include "mb.h"
+#include "app_error.h"
 #if defined(IO_CHECK_TASK_ENABLE) && IO_CHECK_TASK_ENABLE >0
 #include "io_check_task.h"
 #endif
@@ -101,11 +102,18 @@ static void MX_TIM2_ReInit_CH4(uint16_t pulse);
 static void MX_TIM8_ReInit(uint16_t f);
 static void manipulator_pwm_frequency(uint8_t stop_signal,uint16_t interval);
 
+//内存申请失败回调
+void vApplicationMallocFailedHook(void)
+{
+APP_ERROR_HANDLER(APP_ERROR_NO_MEM); 
+}
+
 //创建用户任务
 void app_create_user_tasks(void)
 {
+ APP_LOG_DEBUG("系统任务运行参数初始化...\r\n");
  tasks_environment_init();
-  
+ APP_LOG_DEBUG("创建任务...\r\n"); 
  osThreadDef(sync_task, sync_task, osPriorityNormal, 0, 128);
  sync_task_hdl = osThreadCreate(osThread(sync_task), NULL);
   
@@ -127,7 +135,7 @@ void app_create_user_tasks(void)
  osThreadDef(servo2_task, servo2_task, osPriorityNormal, 0, 128);
  servo2_task_hdl = osThreadCreate(osThread(servo2_task), NULL);
  
- osThreadDef(manipulator_task, manipulator_task, osPriorityNormal, 0, 128);
+ osThreadDef(manipulator_task, manipulator_task, osPriorityNormal, 0, 256);
  manipulator_task_hdl = osThreadCreate(osThread(manipulator_task), NULL);
  
  osThreadDef(presser_task, presser_task, osPriorityNormal, 0, 128);
@@ -142,7 +150,7 @@ void app_create_user_tasks(void)
  osThreadDef(temperature_task, temperature_task, osPriorityNormal, 0, 128);
  temperature_task_hdl = osThreadCreate(osThread(temperature_task), NULL);
  
- osThreadDef(modbus_task, modbus_task, osPriorityNormal, 0, 128);
+ osThreadDef(modbus_task, modbus_task, osPriorityNormal, 0, 256);
  modbus_task_hdl = osThreadCreate(osThread(modbus_task), NULL);
  
 #if defined(IO_CHECK_TASK_ENABLE) &&  IO_CHECK_TASK_ENABLE > 0  
@@ -574,25 +582,25 @@ static void manipulator_task(void const * argument)
  uint8_t row_sensor_pos,column_sensor_pos;
  uint8_t row_sensor_state,column_sensor_state;
  //参数初始话
- manipulator.row.active=JUICE_FALSE;
+ manipulator.row.active=JUICE_TRUE;
  manipulator.row.cur_pos=SENSOR_POS_IN_ROW_NULL;
  manipulator.row.tar_pos=SENSOR_POS_IN_ROW_NULL;
  manipulator.row.dir=NULL_DIR;
- manipulator.row.detect=JUICE_FALSE;
- manipulator.row.detect_timeout=0;
- manipulator.row.sensor_state=SENSOR_STATE_NULL;
  manipulator.row.run_time=0;
- manipulator.column.active=JUICE_FALSE;
+ manipulator.row.sensor_hold_time=0;
+ 
+ manipulator.column.active=JUICE_TRUE;
  manipulator.column.cur_pos=SENSOR_POS_IN_COLUMN_NULL;
  manipulator.column.tar_pos=SENSOR_POS_IN_COLUMN_NULL;
  manipulator.column.dir=NULL_DIR;
- manipulator.column.detect=JUICE_FALSE;
- manipulator.column.detect_timeout=0;
- manipulator.column.sensor_state=SENSOR_STATE_NULL;
  manipulator.column.run_time=0;
+ manipulator.column.sensor_hold_time=0;
+ 
  manipulator.msg_send=JUICE_TRUE;
  
- APP_LOG_INFO("++++++机械手滑台任务开始！\r\n"); 
+ APP_LOG_INFO("++++++机械手滑台任务开始！\r\n");
+ manipulator.row.sensor_state=BSP_get_row_pos_sensor_state();
+ manipulator.column.sensor_state=BSP_get_column_pos_sensor_state();
  while(1)
  {
  msg=osMessageGet(manipulator_msg_queue_hdl,0);
@@ -609,7 +617,9 @@ static void manipulator_task(void const * argument)
  manipulator.msg_send=JUICE_FALSE;
  manipulator.row.run_time=0;
  manipulator.column.run_time=0;
-
+ manipulator.row.sensor_hold_time=0;
+ manipulator.column.sensor_hold_time=0; 
+ 
  APP_LOG_INFO("目标位置sensor pos x：%d  y：%d！\r\n",row_sensor_pos,column_sensor_pos);
  if(manipulator.row.tar_pos==SENSOR_POS_IN_ROW_RST && manipulator.column.tar_pos==SENSOR_POS_IN_COLUMN_RST)
  {
@@ -617,12 +627,11 @@ static void manipulator_task(void const * argument)
  manipulator.column.cur_pos=SENSOR_POS_IN_COLUMN_NULL;
  }
  }
- if(manipulator.row.active==JUICE_TRUE)
- {
+ 
  //传感器状态
-  row_sensor_state=BSP_get_row_pos_sensor_state();
+ row_sensor_state=BSP_get_row_pos_sensor_state();
  //行步进电机确定当前的位置
- if(BSP_is_row_step_motor_in_rst_pos()==JUICE_TRUE && manipulator.row.cur_pos!=SENSOR_POS_IN_ROW_RST)
+ if(BSP_is_row_step_motor_in_rst_pos()==JUICE_TRUE && manipulator.row.cur_pos!=SENSOR_POS_IN_ROW_RST && manipulator.row.dir!=NULL_DIR)
  {
   manipulator.row.cur_pos=SENSOR_POS_IN_ROW_RST;
   manipulator.row.sensor_state=row_sensor_state;
@@ -631,33 +640,41 @@ static void manipulator_task(void const * argument)
  
  if(row_sensor_state!=manipulator.row.sensor_state)//和原来的状态不一样
  {
-  osDelay(MANIPULATOR_ROW_SENSOR_TIMEOUT_VALUE);
-  row_sensor_state=BSP_get_row_pos_sensor_state();
-  if(row_sensor_state!=manipulator.row.sensor_state)//依然不相同
+  manipulator.row.sensor_hold_time+=MANIPULATOR_INTERVAL_VALUE;
+  if(manipulator.row.sensor_hold_time>=MANIPULATOR_ROW_SENSOR_TIMEOUT_VALUE)
   {
-    manipulator.row.sensor_state=row_sensor_state;//更新传感器状态
+   manipulator.row.sensor_hold_time=0;
+   manipulator.row.sensor_state=row_sensor_state;
+   
    if(manipulator.row.cur_pos!=SENSOR_POS_IN_ROW_NULL)//如果已经确定了当前的位置，才可以继续确定当前的位置。只有复位才能第一次确定当前的位置！
    {
    if(manipulator.row.dir==POSITIVE_DIR)
    {
    manipulator.row.cur_pos++;
-   APP_LOG_INFO("行步进电机位置 +1 当前位置：%d！\r\n",manipulator.row.cur_pos);
+   APP_LOG_WARNING("行步进电机位置 +1 当前位置：%d！\r\n",manipulator.row.cur_pos);
    }
    else if(manipulator.row.dir==NEGATIVE_DIR)
    {
    manipulator.row.cur_pos--;
-   APP_LOG_INFO("行步进电机位置 -1 当前位置：%d！\r\n",manipulator.row.cur_pos);  
-   }
+   APP_LOG_WARNING("行步进电机位置 -1 当前位置：%d！\r\n",manipulator.row.cur_pos);  
    }
    else
    {
-   APP_LOG_INFO("行步进电机向复位点运动，忽略位置变动！\r\n"); 
-   }  
+   manipulator.row.cur_pos=SENSOR_POS_IN_ROW_NULL;
+   manipulator.row.tar_pos=SENSOR_POS_IN_ROW_NULL;
+   APP_LOG_WARNING("行步进电机位置被外部强制改变！位置置空！当前位置：%d！\r\n",manipulator.row.cur_pos);  
+   }
   }
   else
   {
-  APP_LOG_INFO("行步进电机传感器抖动，忽略位置变动！\r\n"); 
+    APP_LOG_WARNING("行步进电机位置为空，忽略位置变动！\r\n"); 
+  }  
   }
+ }
+ else if(manipulator.row.sensor_hold_time > 0)
+ {
+ manipulator.row.sensor_hold_time=0;
+ APP_LOG_WARNING("行步进电机传感器抖动，忽略位置变动！\r\n"); 
  }
  
  //行步进电机确定当前运行方向
@@ -673,25 +690,17 @@ static void manipulator_task(void const * argument)
   BSP_row_step_motor_pwr_on_positive();//正向运动
   APP_LOG_INFO("行目标位置 > 当前位置，设置行方向 = POSITIVE_DIR！行步进电机正转！\r\n");
  }
- else if(manipulator.row.tar_pos == manipulator.row.cur_pos)
+ else if(manipulator.row.tar_pos == manipulator.row.cur_pos &&  manipulator.row.dir!=NULL_DIR)
  {
   manipulator.row.dir=NULL_DIR;
-  manipulator.row.active=JUICE_FALSE;
   BSP_row_step_motor_pwr_dwn();//停机
   APP_LOG_INFO("行目标位置 == 当前位置，设置行方向 = DIR_NULL！行步进电机停机！\r\n"); 
  }
- }
  
- //在列步进电机确定了位置之后，始终监测是否被强制移动
- 
- 
- 
- if(manipulator.column.active==JUICE_TRUE)
- {
  //列传感器状态
   column_sensor_state=BSP_get_column_pos_sensor_state();
  //列步进电机确定当前的位置
- if(BSP_is_column_step_motor_in_rst_pos()==JUICE_TRUE && manipulator.column.cur_pos!=SENSOR_POS_IN_COLUMN_RST)
+ if(BSP_is_column_step_motor_in_rst_pos()==JUICE_TRUE && manipulator.column.cur_pos!=SENSOR_POS_IN_COLUMN_RST && manipulator.column.dir!=NULL_DIR)
  {
   manipulator.column.cur_pos=SENSOR_POS_IN_COLUMN_RST;
   manipulator.column.sensor_state=column_sensor_state;
@@ -700,36 +709,42 @@ static void manipulator_task(void const * argument)
  
  if(column_sensor_state!=manipulator.column.sensor_state)//和原来的状态不一样
  {
-  osDelay(MANIPULATOR_COLUMN_SENSOR_TIMEOUT_VALUE);
-  column_sensor_state=BSP_get_column_pos_sensor_state();
-  if(column_sensor_state!=manipulator.column.sensor_state)//依然不相同
-  {
-   manipulator.column.sensor_state=column_sensor_state;//更新传感器状态
+   manipulator.column.sensor_hold_time+=MANIPULATOR_INTERVAL_VALUE;
+   if(manipulator.column.sensor_hold_time>=MANIPULATOR_COLUMN_SENSOR_TIMEOUT_VALUE)
+   {
+    manipulator.column.sensor_hold_time=0;
+    manipulator.column.sensor_state=column_sensor_state;
    if(manipulator.column.cur_pos!=SENSOR_POS_IN_COLUMN_NULL)//如果已经确定了当前的位置，才可以继续确定当前的位置。只有复位才能第一次确定当前的位置！
    {
    if(manipulator.column.dir==POSITIVE_DIR)
    {
    manipulator.column.cur_pos++;
-   APP_LOG_INFO("列步进电机位置 +1 当前位置：%d！\r\n",manipulator.column.cur_pos);
+   APP_LOG_WARNING("列步进电机位置 +1 当前位置：%d！\r\n",manipulator.column.cur_pos);
    }
    else if(manipulator.column.dir==NEGATIVE_DIR)
    {
    manipulator.column.cur_pos--;
-   APP_LOG_INFO("列步进电机位置 -1 当前位置：%d！\r\n",manipulator.column.cur_pos);  
-   }   
+   APP_LOG_WARNING("列步进电机位置 -1 当前位置：%d！\r\n",manipulator.column.cur_pos);  
    }
    else
    {
-   APP_LOG_INFO("行步进电机向复位点运动，忽略位置变动！\r\n"); 
-   }  
-  }
-  else
-  {
-  APP_LOG_DEBUG("列步进电机传感器抖动，忽略位置变动！\r\n"); 
-  }
+   manipulator.row.cur_pos=SENSOR_POS_IN_COLUMN_NULL;
+   manipulator.row.tar_pos=SENSOR_POS_IN_COLUMN_NULL;
+   APP_LOG_WARNING("列步进电机位置被外部强制改变！位置置空！当前位置：%d！\r\n",manipulator.column.cur_pos);  
+   }
+   }
+   else
+   {
+   APP_LOG_WARNING("行步进电机位置为空，忽略位置变动！\r\n"); 
+   }
+   }
  }
- manipulator.column.run_time+=MANIPULATOR_INTERVAL_VALUE;
- //列步进电机确定当前运行方向
+ else if(manipulator.column.sensor_hold_time>0)
+ {
+  manipulator.column.sensor_hold_time=0;
+  APP_LOG_WARNING("列步进电机传感器抖动，忽略位置变动！\r\n");  
+ }
+ 
  if(manipulator.column.tar_pos < manipulator.column.cur_pos && manipulator.column.dir!=NEGATIVE_DIR)
  {
   manipulator.column.dir=NEGATIVE_DIR;
@@ -744,15 +759,19 @@ static void manipulator_task(void const * argument)
   BSP_column_step_motor_pwr_on_positive();//正向运动
   APP_LOG_INFO("列目标位置 > 当前位置，设置列方向 = POSITIVE_DIR！列步进电机正转！\r\n");
  }
- else if(manipulator.column.tar_pos == manipulator.column.cur_pos)
+ else if(manipulator.column.tar_pos == manipulator.column.cur_pos && manipulator.column.dir!=NULL_DIR)
  {
   manipulator.column.dir=NULL_DIR;
-  manipulator.column.active=JUICE_FALSE;
   manipulator.column.run_time=0;
   BSP_column_step_motor_pwr_dwn();//停机
   APP_LOG_INFO("列目标位置 == 当前位置，设置列方向 = DIR_NULL！列步进电机停机！\r\n"); 
  }
- }
+
+ //运行时间
+ if(manipulator.row.dir!=NULL_DIR)
+ manipulator.row.run_time+=MANIPULATOR_INTERVAL_VALUE;
+ if(manipulator.column.dir!=NULL_DIR) 
+ manipulator.column.run_time+=MANIPULATOR_INTERVAL_VALUE;
  
  //全部到位发送到位消息
  if( manipulator.msg_send==JUICE_FALSE && manipulator.row.tar_pos == manipulator.row.cur_pos && manipulator.column.tar_pos == manipulator.column.cur_pos )
@@ -762,37 +781,39 @@ static void manipulator_task(void const * argument)
   APP_LOG_INFO("机械手全部到达目标位置，发送到位信号！\r\n"); 
  }
  
- //运动时检测错误
- if(manipulator.row.active==JUICE_TRUE || manipulator.column.active==JUICE_TRUE)
+ //运动时检测错误  
+ if(manipulator.column.run_time >= MANIPULATOR_COLUMN_MOTOR_STALL_TIMEOUT &&\
+   (juice_is_column_step_motor_stall()==JUICE_TRUE || BSP_is_column_step_motor_fault()==JUICE_TRUE))
  {
-   
- if((manipulator.column.active==JUICE_TRUE && manipulator.column.run_time > MANIPULATOR_COLUMN_MOTOR_STALL_TIMEOUT &&\
-   (juice_is_column_step_motor_stall()==JUICE_TRUE || BSP_is_column_step_motor_fault()==JUICE_TRUE)) ||juice_is_24v_oc()==JUICE_TRUE )
+ manipulator.column.active=JUICE_FALSE;
+ juice_set_fault_code(FAULT_CODE_COLUMN_STEP_MOTOR_FAULT);
+ APP_LOG_ERROR("列步进电机故障！\r\n"); 
+ }
+ if(juice_is_24v_oc()==JUICE_TRUE && (manipulator.column.active==JUICE_TRUE || manipulator.row.active==JUICE_TRUE))
  {
-  if(juice_is_24v_oc()==JUICE_TRUE)
-  {
-  juice_set_fault_code(FAULT_CODE_24V_OC);
-  APP_LOG_ERROR("24V电流过载！\r\n"); 
-  }
-  else
-  {
-  juice_set_fault_code(FAULT_CODE_COLUMN_STEP_MOTOR_FAULT);
-  APP_LOG_ERROR("列步进电机故障！\r\n"); 
-  }
-  
+ manipulator.column.active=JUICE_FALSE;
+ manipulator.row.active=JUICE_FALSE;
+ juice_set_fault_code(FAULT_CODE_24V_OC);
+ APP_LOG_ERROR("24V电流过载！\r\n"); 
+ }
+
+ if(manipulator.msg_send==JUICE_FALSE && (manipulator.row.active==JUICE_FALSE||manipulator.column.active==JUICE_FALSE))
+ {
+  APP_LOG_ERROR("行步进电机和列步进电机停机！\r\n"); 
+  APP_LOG_ERROR("机械手错误，发送未到达目标位信号！\r\n"); 
   manipulator.row.dir=NULL_DIR;
   manipulator.column.dir=NULL_DIR;
   manipulator.row.active=JUICE_FALSE;
   manipulator.column.active=JUICE_FALSE;
   manipulator.row.run_time=0;
   manipulator.column.run_time=0;
-  APP_LOG_ERROR("行步进电机和列步进电机停机！\r\n"); 
-  APP_LOG_ERROR("机械手错误，发送未到达目标位信号！\r\n"); 
+  manipulator.row.tar_pos=manipulator.row.cur_pos;
+  manipulator.column.tar_pos=manipulator.column.cur_pos;
+
   BSP_row_step_motor_pwr_dwn();//停机
   BSP_column_step_motor_pwr_dwn();//停机
   osSignalSet(sync_task_hdl,MANIPULATOR_REACH_POS_ERR_SIGNAL);
   manipulator.msg_send=JUICE_TRUE;
- }
  }
   //机械手速度步进
  manipulator_pwm_frequency(manipulator.msg_send,MANIPULATOR_INTERVAL_VALUE);
@@ -969,9 +990,13 @@ static void juice_task(void const * argument)
  APP_LOG_INFO("榨汁任务收到消息！\r\n");
  if(msg.value.v == JUICE_START_MSG)
  {
-  BSP_juicing_motor_pwr_on(); 
   APP_LOG_INFO("榨汁开始！打开榨汁电机！\r\n");
-  while(timeout<JUICING_TIMEOUT_VALUE-5000)
+  BSP_juicing_motor_pwr_on(); 
+  osDelay(5);
+  BSP_juicing_motor_pwr_dwn(); 
+  osDelay(1000);
+  BSP_juicing_motor_pwr_on(); 
+  while(timeout<JUICING_TIMEOUT_VALUE-100)//留100ms保证消息发送时间
   {
   msg= osMessageGet(juice_msg_queue_hdl,0); 
   if(msg.status==osEventMessage && msg.value.v == JUICE_STOP_MSG)

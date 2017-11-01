@@ -74,8 +74,8 @@
 //光电开关
 #define  BSP_PS_IN_TAR_POS_PIN_STATE                            GPIO_PIN_RESET
 //输入端口
-#define  BSP_COLUMN_STEP_MOTOR_FAULT_PIN_STATE                  GPIO_PIN_SET
-#define  BSP_COLUMN_STEP_MOTOR_STALL_PIN_STATE                  GPIO_PIN_SET
+#define  BSP_COLUMN_STEP_MOTOR_FAULT_PIN_STATE                  GPIO_PIN_RESET
+#define  BSP_COLUMN_STEP_MOTOR_STALL_PIN_STATE                  GPIO_PIN_RESET
 
 //超时
 #define  BSP_RELAY_RELEASE_TIMEOUT_VALUE                        50

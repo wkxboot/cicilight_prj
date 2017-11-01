@@ -54,14 +54,10 @@
 /* USER CODE BEGIN Includes */     
 #include "gpio.h"
 #include "tim.h"
-#include "app_log.h"
-    
-#if APP_LOG_ENABLED > 0    
-#undef  APP_LOG_MODULE_NAME 
-#undef  APP_LOG_MODULE_LEVEL
 #define APP_LOG_MODULE_NAME   "[freertos]"
-#define APP_LOG_MODULE_LEVEL   APP_LOG_LEVEL_DEBUG    
-#endif
+#define APP_LOG_MODULE_LEVEL   APP_LOG_LEVEL_DEBUG  
+#include "app_log.h"
+  
 /* USER CODE END Includes */
 
 /* Variables -----------------------------------------------------------------*/
@@ -138,12 +134,13 @@ void StartDefaultTask(void const * argument)
 
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
-   void app_create_user_tasks(void);
-   osDelay(2000);//等待上电完毕
-   app_create_user_tasks();
+  void app_create_user_tasks(void);
+  APP_LOG_DEBUG("等待系统上电完毕...\r\n");//24V和12V上电可能不会同步，所以
+  osDelay(2000);//等待上电完毕
+  app_create_user_tasks();
   for(;;)
   {
-    osDelay(3000);
+  osDelay(3000);
   }
   /* USER CODE END StartDefaultTask */
 }

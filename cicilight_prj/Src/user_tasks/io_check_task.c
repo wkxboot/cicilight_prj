@@ -242,6 +242,12 @@ void io_check_task(void const * argument)
   APP_LOG_INFO("温度结果值:%d\r\n",BSP_get_temperature(adc_sample[3]));
   continue;
   }
+  if(strcmp(cmd_str,CMD_GET_DRV8711_STATUS)==0)
+  {
+    extern void get_status();
+   get_status();
+  continue;
+  }
 
   extern osMessageQId servo2_msg_queue_hdl;
   extern osMessageQId servo1_msg_queue_hdl;

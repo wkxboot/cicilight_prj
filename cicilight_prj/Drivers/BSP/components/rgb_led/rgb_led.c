@@ -5,15 +5,10 @@
 #include "gpio.h"
 #include "tim.h"
 #include "rgb_led.h"
+#define APP_LOG_MODULE_NAME   "[rgb]"
+#define APP_LOG_MODULE_LEVEL   APP_LOG_LEVEL_DEBUG  
 #include "app_log.h"
     
-#if APP_LOG_ENABLED > 0    
-#undef  APP_LOG_MODULE_NAME 
-#undef  APP_LOG_MODULE_LEVEL
-#define APP_LOG_MODULE_NAME   "[rgb]"
-#define APP_LOG_MODULE_LEVEL   APP_LOG_LEVEL_DEBUG    
-#endif
-
 extern SPI_HandleTypeDef hspi1;
 
 static uint8_t RGB_LED_BUFF[RGB_LED_NUM_MAX][24];
@@ -136,52 +131,3 @@ void overwrite_color(uint32_t rgb,uint8_t pos,uint8_t brightness)
  strip_set_pixel_color(pos,rgb,brightness);
  strip_show();
 }
-
-/*
-
- void juicing_color(uint16_t wait_time)
-{
- for(uint8_t i=0;i<JUICING_BLINK_CNT;i++)
- {
- single_color(JUICING_YELLOW_COLOR,255);//黄色rgb=255 255 0
- osDelay(JUICING_BLINK_DELAY_TIME);
- single_color(JUICING_BLACK_COLOR,255);//黑色
- osDelay(JUICING_BLINK_DELAY_TIME);
- }
- single_color(JUICING_BLACK_COLOR,255);//黑色
- for(uint8_t i=0;i<JUICING_REPEAT_CNT;i++)
- {
- overwrite_color(JUICING_WHITE_COLOR,RGB_LED_SECTION1_POS,RGB_LED_SECTION1_CNT,wait_time,255);
- osDelay(JUICING_SECTION_DELAY_TIME);
- overwrite_color(JUICING_GREEN_COLOR,RGB_LED_SECTION2_POS,RGB_LED_SECTION2_CNT,wait_time,255);
- osDelay(JUICING_SECTION_DELAY_TIME);
- overwrite_color(JUICING_BLUE_COLOR,RGB_LED_SECTION3_POS,RGB_LED_SECTION3_CNT,wait_time,255);
- osDelay(JUICING_SECTION_DELAY_TIME);
- 
- 
- overwrite_color(JUICING_YELLOW_COLOR,RGB_LED_SECTION1_POS,RGB_LED_SECTION1_CNT,wait_time,255);
- osDelay(JUICING_SECTION_DELAY_TIME);
- overwrite_color(JUICING_WHITE_COLOR,RGB_LED_SECTION2_POS,RGB_LED_SECTION2_CNT,wait_time,255);
- osDelay(JUICING_SECTION_DELAY_TIME);
- overwrite_color(JUICING_GREEN_COLOR,RGB_LED_SECTION3_POS,RGB_LED_SECTION3_CNT,wait_time,255);
- osDelay(JUICING_SECTION_DELAY_TIME);
- 
- 
- overwrite_color(JUICING_BLUE_COLOR,RGB_LED_SECTION1_POS,RGB_LED_SECTION1_CNT,wait_time,255);
- osDelay(JUICING_SECTION_DELAY_TIME);
- overwrite_color(JUICING_YELLOW_COLOR,RGB_LED_SECTION2_POS,RGB_LED_SECTION2_CNT,wait_time,255);
- osDelay(JUICING_SECTION_DELAY_TIME);
- overwrite_color(JUICING_WHITE_COLOR,RGB_LED_SECTION3_POS,RGB_LED_SECTION3_CNT,wait_time,255);
- osDelay(JUICING_SECTION_DELAY_TIME);
- 
- 
- overwrite_color(JUICING_GREEN_COLOR,RGB_LED_SECTION1_POS,RGB_LED_SECTION1_CNT,wait_time,255);
- osDelay(JUICING_SECTION_DELAY_TIME);
- overwrite_color(JUICING_BLUE_COLOR,RGB_LED_SECTION2_POS,RGB_LED_SECTION2_CNT,wait_time,255);
- osDelay(JUICING_SECTION_DELAY_TIME);
- overwrite_color(JUICING_YELLOW_COLOR,RGB_LED_SECTION3_POS,RGB_LED_SECTION3_CNT,wait_time,255);
- osDelay(JUICING_SECTION_DELAY_TIME);
-}
-
-}
-*/

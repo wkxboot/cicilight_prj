@@ -30,6 +30,7 @@
 #define  CMD_PWR_ON_NEGATIVE_COLUMN_MOTOR       "n c"
 #define  CMD_PWR_DWN_COLUMN_MOTOR               "d c"
 #define  CMD_GET_TEMPERATURE                    "get t"
+#define  CMD_GET_DRV8711_STATUS                 "get 8711"
 /*RTT DEBUG 底层控制 end*/
 
 /*RTT DEBUG 高级功能 begin*/

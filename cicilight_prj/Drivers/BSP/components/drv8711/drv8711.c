@@ -114,12 +114,12 @@ void begin (unsigned int torque, unsigned int gain, unsigned int microsteps)
 	// BLANK Register
 	G_BLANK_REG.Address     = 0x03;
 	G_BLANK_REG.ABT 	= 0x01;  //enable adaptive blanking time
-	G_BLANK_REG.TBLANK 	= 0x80;//0x80;  //no idea what this should be but the
+	G_BLANK_REG.TBLANK 	= 0x10;  //no idea what this should be but the
         //1000 000 1 00001000            //user guide shows it set to this
 
 	// DECAY Register.
 	G_DECAY_REG.Address     = 0x04;
-	G_DECAY_REG.DECMOD      = 0x03;  //mixed decay
+	G_DECAY_REG.DECMOD      = 0x01;  //mixed decay
 	G_DECAY_REG.TDECAY      = 0x10;  //default
         //1000001100010000
 
@@ -275,6 +275,16 @@ void ReadAllRegisters()
     G_STATUS_REG.BOCP       = ((readData >> 2) & 0x0001);
     G_STATUS_REG.AOCP       = ((readData >> 1) & 0x0001);
     G_STATUS_REG.OTS        = ((readData >> 0) & 0x0001);
+    
+    APP_LOG_WARNING("Status Register\r\n");
+    APP_LOG_WARNING("STDLAT = %d\r\n",G_STATUS_REG.STDLAT);
+    APP_LOG_WARNING("STD = %d\r\n",G_STATUS_REG.STD);
+    APP_LOG_WARNING("UVLO = %d\r\n",G_STATUS_REG.UVLO );
+    APP_LOG_WARNING("BPDF = %d\r\n",G_STATUS_REG.BPDF);
+    APP_LOG_WARNING("APDF = %d\r\n",G_STATUS_REG.APDF);
+    APP_LOG_WARNING("BOCP = %d\r\n",G_STATUS_REG.BOCP );
+    APP_LOG_WARNING("AOCP = %d\r\n",G_STATUS_REG.AOCP);
+    APP_LOG_WARNING("OTS = %d\r\n",G_STATUS_REG.OTS );
 }
 
 void WriteAllRegisters()
