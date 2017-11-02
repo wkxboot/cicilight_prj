@@ -8,13 +8,13 @@
 #define  ADC_TIMEOUT_VALUE                               250//adc采样持续时间
 #define  ADC_TASK_RUN_INTERVAL_VALUE                     25 //采样间隔
 #define  MANIPULATOR_TIMEOUT_VALUE                       30000//机械手到达目标位置超时时间 暂定
-#define  MANIPULATOR_ROW_SENSOR_TIMEOUT_VALUE            20//机械手行传感器抖动超时
-#define  MANIPULATOR_COLUMN_SENSOR_TIMEOUT_VALUE         80//机械手列传感器抖动超时
-#define  MANIPULATOR_INTERVAL_VALUE                      10//机械手传感器采样间隔/运行间隔
+#define  MANIPULATOR_ROW_SENSOR_TIMEOUT_VALUE            60//机械手行传感器抖动超时
+#define  MANIPULATOR_COLUMN_SENSOR_TIMEOUT_VALUE         60//机械手列传感器抖动超时
+#define  MANIPULATOR_INTERVAL_VALUE                      5//机械手传感器采样间隔/运行间隔
 #define  MANIPULATOR_COLUMN_MOTOR_STALL_TIMEOUT          1000//启动1.0秒后检测   
 #define  MANIPULATOR_START_FREQUENCY                     1 //khz
 #define  MANIPULATOR_EXPIRED_FREQUENCY                   20//khz
-#define  MANIPULATOR_STEP_FREQUENCY                      2 //khz
+#define  MANIPULATOR_STEP_FREQUENCY                      4//khz
 #define  MANIPULATOR_STEP_FREQUENCY_TIMEOUT              10//ms
 
 #define  PRESSER_INTERVAL_VALUE                          20//压杯电机任务运行间隔
