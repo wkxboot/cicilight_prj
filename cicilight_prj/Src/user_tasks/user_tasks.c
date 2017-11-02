@@ -728,14 +728,14 @@ static void manipulator_task(void const * argument)
    }
    else
    {
-   manipulator.row.cur_pos=SENSOR_POS_IN_COLUMN_NULL;
-   manipulator.row.tar_pos=SENSOR_POS_IN_COLUMN_NULL;
+   manipulator.column.cur_pos=SENSOR_POS_IN_COLUMN_NULL;
+   manipulator.column.tar_pos=SENSOR_POS_IN_COLUMN_NULL;
    APP_LOG_WARNING("列步进电机位置被外部强制改变！位置置空！当前位置：%d！\r\n",manipulator.column.cur_pos);  
    }
    }
    else
    {
-   APP_LOG_WARNING("行步进电机位置为空，忽略位置变动！\r\n"); 
+   APP_LOG_WARNING("列步进电机位置为空，忽略位置变动！\r\n"); 
    }
    }
  }
@@ -996,7 +996,7 @@ static void juice_task(void const * argument)
   BSP_juicing_motor_pwr_dwn(); 
   osDelay(1000);
   BSP_juicing_motor_pwr_on(); 
-  while(timeout<JUICING_TIMEOUT_VALUE-100)//留100ms保证消息发送时间
+  while(timeout<JUICING_TIMEOUT_VALUE-100-1005)//留100ms保证消息发送时间
   {
   msg= osMessageGet(juice_msg_queue_hdl,0); 
   if(msg.status==osEventMessage && msg.value.v == JUICE_STOP_MSG)
