@@ -8,14 +8,16 @@
 #define  ADC_TIMEOUT_VALUE                               250//adc采样持续时间
 #define  ADC_TASK_RUN_INTERVAL_VALUE                     25 //采样间隔
 #define  MANIPULATOR_TIMEOUT_VALUE                       30000//机械手到达目标位置超时时间 暂定
-#define  MANIPULATOR_ROW_SENSOR_TIMEOUT_VALUE            60//机械手行传感器抖动超时
-#define  MANIPULATOR_COLUMN_SENSOR_TIMEOUT_VALUE         60//机械手列传感器抖动超时
+#define  MANIPULATOR_ROW_SENSOR_VALID_TIMEOUT_VALUE      60//机械手行传感器确认有效超时
+#define  MANIPULATOR_COLUMN_SENSOR_VALID_TIMEOUT_VALUE   60//机械手列传感器确认有效超时
 #define  MANIPULATOR_INTERVAL_VALUE                      5//机械手传感器采样间隔/运行间隔
-#define  MANIPULATOR_COLUMN_MOTOR_STALL_TIMEOUT          1000//启动1.0秒后检测   
+#define  MANIPULATOR_ROW_SENSOR_HOLD_ON_TIMEOUT          5000//传感器未变化超时   
+#define  MANIPULATOR_COLUMN_SENSOR_HOLD_ON_TIMEOUT       5000//传感器未变化超时
+#define  MANIPULATOR_STALL_IGNORE_TIMEOUT                1000//启动忽略堵转检测超时
 #define  MANIPULATOR_START_FREQUENCY                     1 //khz
 #define  MANIPULATOR_EXPIRED_FREQUENCY                   20//khz
 #define  MANIPULATOR_STEP_FREQUENCY                      4//khz
-#define  MANIPULATOR_STEP_FREQUENCY_TIMEOUT              10//ms
+#define  MANIPULATOR_STEP_FREQUENCY_TIMEOUT_VALUE        10//ms
 
 #define  PRESSER_INTERVAL_VALUE                          20//压杯电机任务运行间隔
 #define  PRESSER_OC_DELAY_VALUE                          100//压杯电机启动后开始检查过载的延时时间
@@ -62,6 +64,15 @@
 #define  PRESSER_UNPRESS_MSG                             2
 #define  COMPRESSOR_OPEN_MSG                             1
 #define  COMPRESSOR_CLOSE_MSG                            2
+
+#define  MANIPULATOR_RESET_POS_MSG                       1
+#define  MANIPULATOR_JUICING_POS_MSG                     2
+#define  MANIPULATOR_UP_STEP_MSG                         3
+#define  MANIPULATOR_DWN_STEP_MSG                        4
+#define  MANIPULATOR_LEFT_STEP_MSG                       5
+#define  MANIPULATOR_RIGHT_STEP_MSG                      6
+#define  MANIPULATOR_STOP_MSG                            7
+
 #define  SERVO1_ANGLE_OPEN_MSG                           115//时间=177
 #define  SERVO1_ANGLE_CLOSE_MSG                          152//时间=207
 #define  SERVO2_ANGLE_0_MSG                              0
@@ -191,7 +202,8 @@ typedef struct
  uint8_t tar_pos;
  uint8_t active;
  uint8_t sensor_state;
- uint8_t sensor_hold_time;
+ uint8_t sensor_valid_time;
+ uint16_t sensor_hold_on_time;
  uint8_t detect;
  uint16_t detect_timeout;
  uint32_t run_time;

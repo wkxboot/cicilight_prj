@@ -28,7 +28,7 @@ reg_handler_t reg_holding[REG_HOLDING_PROTOCOL_CNT]={
 {write_opt_type_handle,                    NULL,0x1001,2},
 {write_fault_code_handle,read_fault_code_handle,0x1003,1},
 {write_t_setting_handle,read_t_setting_handle,  0x1004,3},
-{write_debug_cmd_handle,read_debug_cmd_handle,  0x1007,2},
+{write_debug_cmd_handle,read_debug_cmd_handle,  0x1007,7},
 };
 reg_handler_t reg_input[REG_INPUT_PROTOCOL_CNT]={
 {NULL,read_sys_info_handle,0x1101,5}
@@ -310,35 +310,108 @@ static uint8_t read_t_setting_handle(uint8_t *ptr_buff)//读温度设置
 
 
 static uint8_t write_debug_cmd_handle(uint8_t *ptr_buff)
-{
+{  
  uint8_t ret=JUICE_TRUE;
- uint16_t buff[2];
+ uint16_t buff[8];
  if(ptr_buff==NULL)
  {
  ret=JUICE_FALSE;
  APP_LOG_WARNING("错误！寄存器指针为空！\r\n");
  return ret;
  }
- //参数校验
+ //升降门参数检查
  buff[0]=*ptr_buff++<<8;
  buff[0]|=*ptr_buff++; 
- if(buff[0]!=REG_VALUE_OH_DOOR_OPEN && buff[0]!=REG_VALUE_OH_DOOR_CLOSE)
+ if(buff[0]!=REG_VALUE_OH_DOOR_OPEN && buff[0]!=REG_VALUE_OH_DOOR_CLOSE && buff[0]!=REG_VALUE_OH_DOOR_IGNORE)
  {
  ret=JUICE_FALSE;
  APP_LOG_INFO("写升降门参数错误！写的值：%d\r\n",buff[0]); 
  return ret;
  }
  APP_LOG_INFO("写升降门参数正确！写的值：%d\r\n",buff[0]); 
- 
+ //RGB_LED参数检查
  buff[1]=*ptr_buff++<<8;
  buff[1]|=*ptr_buff++; 
- if(buff[1]!=REG_VALUE_RGB_LED_OPEN && buff[1]!=REG_VALUE_RGB_LED_CLOSE)
+ if(buff[1]!=REG_VALUE_RGB_LED_OPEN && buff[1]!=REG_VALUE_RGB_LED_CLOSE && buff[1]!=REG_VALUE_RGB_LED_IGNORE)
  {
  ret=JUICE_FALSE;
  APP_LOG_INFO("写RGB_LED参数错误！写的值：%d\r\n",buff[1]); 
  return ret;
  }
  APP_LOG_INFO("写RGB_LED参数正确！写的值：%d\r\n",buff[1]); 
+ //压杯参数检查
+ buff[2]=*ptr_buff++<<8;
+ buff[2]|=*ptr_buff++; 
+ if(buff[2]!=REG_VALUE_PRESSER_PRESS && buff[2]!=REG_VALUE_PRESSER_UNPRESS && buff[2]!=REG_VALUE_PRESSER_IGNORE)
+ {
+ ret=JUICE_FALSE;
+ APP_LOG_INFO("写压杯参数错误！写的值：%d\r\n",buff[2]); 
+ return ret;
+ }
+ APP_LOG_INFO("写压杯参数正确！写的值：%d\r\n",buff[2]); 
+ //榨汁电机参数检查
+ buff[3]=*ptr_buff++<<8;
+ buff[3]|=*ptr_buff++; 
+ if(buff[3]!=REG_VALUE_JUICING_OPEN && buff[3]!=REG_VALUE_JUICING_CLOSE && buff[3]!=REG_VALUE_JUICING_IGNORE)
+ {
+ ret=JUICE_FALSE;
+ APP_LOG_INFO("写榨汁电机参数错误！写的值：%d\r\n",buff[3]); 
+ return ret;
+ }
+ APP_LOG_INFO("写榨汁电机参数正确！写的值：%d\r\n",buff[3]); 
+ //压缩机参数检查
+ buff[4]=*ptr_buff++<<8;
+ buff[4]|=*ptr_buff++; 
+ if(buff[4]!=REG_VALUE_COMPRESSOR_OPEN && buff[4]!=REG_VALUE_COMPRESSOR_CLOSE && buff[4]!=REG_VALUE_COMPRESSOR_IGNORE)
+ {
+ ret=JUICE_FALSE;
+ APP_LOG_INFO("写压缩机参数错误！写的值：%d\r\n",buff[4]); 
+ return ret;
+ }
+ APP_LOG_INFO("写压缩机参数正确！写的值：%d\r\n",buff[4]); 
+ 
+ 
+ 
+ 
+ //机械手滑台参数检查
+ buff[5]=*ptr_buff++<<8;
+ buff[5]|=*ptr_buff++; 
+ 
+ if((buff[5]>>8==0 && (buff[5]&0xff) < PROTOCOL_DEBUG_REG_CNT) ||\
+    ((buff[5]>>8 >= REG_VALUE_JUICE_ROW_MIN_POS && buff[5]>>8 <= REG_VALUE_JUICE_ROW_MAX_POS)&&\
+    ((buff[5]&0xff) >= REG_VALUE_JUICE_COLUMN_MIN_POS && (buff[5]&0xff) <= REG_VALUE_JUICE_COLUMN_MAX_POS))||\
+     buff[5] == REG_VALUE_MANIPULATOR_IGNORE)
+ {
+ APP_LOG_INFO("写机械手参数正确！写的值：%d\r\n",buff[5]); 
+ }
+ else
+ {
+ ret=JUICE_FALSE;
+ APP_LOG_INFO("写机械手参数错误！写的值：%d\r\n",buff[5]); 
+ return ret;
+ }
+
+ 
+ //舵机1爪子参数检查
+ buff[6]=*ptr_buff++<<8;
+ buff[6]|=*ptr_buff++; 
+ if(buff[6]>REG_VALUE_SERVO1_MAX_ANGLE && buff[6]!=REG_VALUE_SERVO1_IGNORE)
+ {
+ ret=JUICE_FALSE;
+ APP_LOG_INFO("写舵机爪子参数错误！写的值：%d\r\n",buff[6]); 
+ return ret;
+ }
+ APP_LOG_INFO("写舵机爪子参数正确！写的值：%d\r\n",buff[6]); 
+ //舵机2手臂参数检查
+ buff[7]=*ptr_buff++<<8;
+ buff[7]|=*ptr_buff++; 
+ if(buff[7]>REG_VALUE_SERVO2_MAX_ANGLE && buff[7]!=REG_VALUE_SERVO2_IGNORE)
+ {
+ ret=JUICE_FALSE;
+ APP_LOG_INFO("写舵机手臂参数错误！写的值：%d\r\n",buff[7]); 
+ return ret;
+ }
+ APP_LOG_INFO("写舵机手臂参数正确！写的值：%d\r\n",buff[7]); 
  
  //把值写入寄存器
  if(set_reg_value(PROTOCOL_DEBUG_REG_ADDR,PROTOCOL_DEBUG_REG_CNT,buff,REGHOLDING_MODE)!=JUICE_TRUE)
@@ -348,7 +421,7 @@ static uint8_t write_debug_cmd_handle(uint8_t *ptr_buff)
   return ret;
  }
   APP_LOG_WARNING("写调试命令成功！\r\n");
- 
+ //升降门任务
  if(buff[0]==REG_VALUE_OH_DOOR_OPEN)
  {
  if(osMessagePut(oh_door_msg_queue_hdl,OH_DOOR_OPEN_MSG,0)!=osOK)
@@ -359,7 +432,7 @@ static uint8_t write_debug_cmd_handle(uint8_t *ptr_buff)
  }
  APP_LOG_INFO("向升降门发送开门消息成功！\r\n"); 
  }
- else
+ else if(buff[0]==REG_VALUE_OH_DOOR_CLOSE)
  {
  if(osMessagePut(oh_door_msg_queue_hdl,OH_DOOR_CLOSE_MSG,0)!=osOK)
  {
@@ -369,7 +442,7 @@ static uint8_t write_debug_cmd_handle(uint8_t *ptr_buff)
  }
  APP_LOG_INFO("向升降门发送关门消息成功！\r\n");
  }
- 
+ //RGB_LED任务
  if(buff[1]==REG_VALUE_RGB_LED_OPEN)
  {
   if(osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_STANDBY_MSG,0)!=osOK)
@@ -380,7 +453,7 @@ static uint8_t write_debug_cmd_handle(uint8_t *ptr_buff)
   }
   APP_LOG_INFO("向RGB_LED任务发送开待机灯消息成功！\r\n"); 
  }
- else
+ else if(buff[1]==REG_VALUE_RGB_LED_CLOSE)
  {
  if(osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_CLOSE_MSG,0)!=osOK)
  {
@@ -390,6 +463,178 @@ static uint8_t write_debug_cmd_handle(uint8_t *ptr_buff)
  }
  APP_LOG_INFO("向RGB_LED任务发送关灯消息成功！\r\n");
  } 
+ //压杯任务
+ if(buff[2]==REG_VALUE_PRESSER_PRESS)
+ {
+  if(osMessagePut(presser_msg_queue_hdl,PRESSER_PRESS_MSG,0)!=osOK)
+  {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向压杯任务发送压杯消息失败！\r\n"); 
+  return ret;
+  }
+  APP_LOG_INFO("向压杯任务发送压杯消息成功！\r\n"); 
+ }
+ else if(buff[2]==REG_VALUE_PRESSER_UNPRESS)
+ {
+ if(osMessagePut(presser_msg_queue_hdl,PRESSER_UNPRESS_MSG,0)!=osOK)
+ {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向压杯任务发送松杯消息失败！\r\n"); 
+  return ret;
+ }
+ APP_LOG_INFO("向压杯任务发送松杯消息成功！！\r\n");
+ } 
+ //榨汁电机任务
+  if(buff[3]==REG_VALUE_JUICING_OPEN)
+ {
+  if(osMessagePut(juice_msg_queue_hdl,JUICE_START_MSG,0)!=osOK)
+  {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向榨汁电机任务发送启动消息失败！\r\n"); 
+  return ret;
+  }
+  APP_LOG_INFO("向榨汁电机任务发送启动消息成功！\r\n"); 
+ }
+ else if(buff[3]==REG_VALUE_JUICING_CLOSE)
+ {
+ if(osMessagePut(juice_msg_queue_hdl,JUICE_STOP_MSG,0)!=osOK)
+ {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向榨汁电机任务发送关闭消息失败！\r\n"); 
+  return ret;
+ }
+ APP_LOG_INFO("向榨汁电机任务发送关闭消息成功！\r\n");
+ }
+ //压缩机任务
+ if(buff[4]==REG_VALUE_COMPRESSOR_OPEN)
+ {
+  if(osMessagePut(compressor_msg_queue_hdl,COMPRESSOR_OPEN_MSG,0)!=osOK)
+  {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向压缩机任务发送启动消息失败！\r\n"); 
+  return ret;
+  }
+  APP_LOG_INFO("向压缩机任务发送启动消息成功！\r\n"); 
+ }
+ else if(buff[4]==REG_VALUE_COMPRESSOR_CLOSE)
+ {
+ if(osMessagePut(compressor_msg_queue_hdl,COMPRESSOR_CLOSE_MSG,0)!=osOK)
+ {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向压缩机任务发送关闭消息失败！\r\n"); 
+  return ret;
+ }
+ APP_LOG_INFO("向压缩机任务发送关闭消息成功！\r\n");
+ }
+ //机械手滑台
+ if(buff[5]==REG_VALUE_MANIPULATOR_RESET_POS)
+ {
+  if(osMessagePut(manipulator_msg_queue_hdl,MANIPULATOR_RESET_POS_MSG,0)!=osOK)
+  {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向机械手滑台任务发送复位点消息失败！\r\n"); 
+  return ret;
+  }
+  APP_LOG_INFO("向机械手滑台任务发送复位点消息成功！\r\n");
+ }
+ else if(buff[5]==REG_VALUE_MANIPULATOR_JUICING_POS)
+ {
+  if(osMessagePut(manipulator_msg_queue_hdl,MANIPULATOR_JUICING_POS_MSG,0)!=osOK)
+  {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向机械手滑台任务发送榨汁口消息失败！\r\n"); 
+  return ret;
+  }
+  APP_LOG_INFO("向机械手滑台任务发送榨汁口消息成功！\r\n");
+ }
+ else if(buff[5]==REG_VALUE_MANIPULATOR_UP_STEP)
+ {
+  if(osMessagePut(manipulator_msg_queue_hdl,MANIPULATOR_UP_STEP_MSG,0)!=osOK)
+  {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向机械手滑台任务发送上移一步消息失败！\r\n"); 
+  return ret;
+  }
+  APP_LOG_INFO("向机械手滑台任务发送上移一步消息成功！\r\n");
+ }
+ else if(buff[5]==REG_VALUE_MANIPULATOR_DWN_STEP)
+ {
+  if(osMessagePut(manipulator_msg_queue_hdl,MANIPULATOR_DWN_STEP_MSG,0)!=osOK)
+  {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向机械手滑台任务发送下移一步消息失败！\r\n"); 
+  return ret;
+  }
+  APP_LOG_INFO("向机械手滑台任务发送下移一步消息成功！\r\n");
+ }
+ else if(buff[5]==REG_VALUE_MANIPULATOR_LEFT_STEP)
+ {
+  if(osMessagePut(manipulator_msg_queue_hdl,MANIPULATOR_LEFT_STEP_MSG,0)!=osOK)
+  {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向机械手滑台任务发送左移一步消息失败！\r\n"); 
+  return ret;
+  }
+  APP_LOG_INFO("向机械手滑台任务发送左移一步消息成功！\r\n");
+ }
+ else if(buff[5]==REG_VALUE_MANIPULATOR_RIGHT_STEP)
+ {
+  if(osMessagePut(manipulator_msg_queue_hdl,MANIPULATOR_RIGHT_STEP_MSG,0)!=osOK)
+  {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向机械手滑台任务发送右移一步消息失败！\r\n"); 
+  return ret;
+  }
+  APP_LOG_INFO("向机械手滑台任务发送右移一步消息成功！\r\n");
+ }
+ else if(buff[5]==REG_VALUE_MANIPULATOR_STOP)
+ {
+  if(osMessagePut(manipulator_msg_queue_hdl,MANIPULATOR_STOP_MSG,0)!=osOK)
+  {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向机械手滑台任务发送停止消息失败！\r\n"); 
+  return ret;
+  }
+  APP_LOG_INFO("向机械手滑台任务发送停止消息成功！\r\n");
+ }
+ else if(buff[5]!=REG_VALUE_MANIPULATOR_IGNORE)
+ {
+  uint8_t row_sensor_pos,column_sensor_pos;
+  uint8_t manipulator_get_sensor_row_pos(uint8_t juice_row_pos);
+  uint8_t manipulator_get_sensor_column_pos(uint8_t juice_column_pos);
+  row_sensor_pos=manipulator_get_sensor_row_pos(buff[5]>>8);
+  column_sensor_pos=manipulator_get_sensor_column_pos(buff[5]&0xff);
+  
+ if(osMessagePut(manipulator_msg_queue_hdl,(uint16_t)row_sensor_pos<<8|column_sensor_pos,0)!=osOK)
+  {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向机械手滑台任务发送位置消息失败！\r\n"); 
+  return ret;
+  }
+  APP_LOG_INFO("向机械手滑台任务发送位置消息成功！\r\n");  
+ }
+ //舵机1爪子任务 
+  if(buff[6]!= REG_VALUE_SERVO1_IGNORE)
+  {
+   if(osMessagePut(servo1_msg_queue_hdl,buff[6],0)!=osOK)
+  {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向舵机1爪子任务发送角度%d°消息失败！\r\n",buff[6]); 
+  return ret;
+  }
+  APP_LOG_INFO("向舵机1爪子任务发送角度%d°消息成功！\r\n",buff[6]); 
+  }
+ //舵机2手臂任务
+ if(buff[7]!=REG_VALUE_SERVO2_IGNORE)
+ {
+  if(osMessagePut(servo2_msg_queue_hdl,buff[7],0)!=osOK)
+  {
+  ret=JUICE_FALSE;
+  APP_LOG_INFO("向舵机2爪子任务发送角度%d°消息失败！\r\n",buff[7]); 
+  return ret;
+  }
+  APP_LOG_INFO("向舵机2爪子任务发送角度%d°消息成功！\r\n",buff[7]); 
+ }
  
  return ret;
 }
