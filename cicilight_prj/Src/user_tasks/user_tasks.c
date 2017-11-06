@@ -660,7 +660,7 @@ static void manipulator_task(void const * argument)
  {
    if(manipulator.column.cur_pos>=SENSOR_POS_IN_COLUMN_5)
    continue;
-   column_sensor_pos=manipulator.column.cur_pos%2==0?manipulator.column.cur_pos+2:manipulator.row.cur_pos+1;
+   column_sensor_pos=manipulator.column.cur_pos%2==0?manipulator.column.cur_pos+2:manipulator.column.cur_pos+1;
    APP_LOG_INFO("机械手滑台右移一步命令消息！\r\n");
  }
  
@@ -729,6 +729,7 @@ static void manipulator_task(void const * argument)
   }
   else
   {
+    manipulator.row.sensor_hold_on_time=0;//只有检测到位置变化，状态保持时间清零。
     APP_LOG_WARNING("行步进电机位置为空，忽略位置变动！\r\n"); 
   }  
   }
@@ -802,6 +803,7 @@ static void manipulator_task(void const * argument)
    }
    else
    {
+   manipulator.column.sensor_hold_on_time=0;//只有检测到位置变化，状态保持时间清零。
    APP_LOG_WARNING("列步进电机位置为空，忽略位置变动！\r\n"); 
    }
    }

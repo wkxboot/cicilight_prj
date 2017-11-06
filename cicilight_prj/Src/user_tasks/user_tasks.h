@@ -73,8 +73,8 @@
 #define  MANIPULATOR_RIGHT_STEP_MSG                      6
 #define  MANIPULATOR_STOP_MSG                            7
 
-#define  SERVO1_ANGLE_OPEN_MSG                           115//时间=177
-#define  SERVO1_ANGLE_CLOSE_MSG                          152//时间=207
+#define  SERVO1_ANGLE_OPEN_MSG                           115//115°
+#define  SERVO1_ANGLE_CLOSE_MSG                          148//148°
 #define  SERVO2_ANGLE_0_MSG                              0
 #define  SERVO2_ANGLE_25_MSG                             25
 #define  SERVO2_ANGLE_90_MSG                             90
@@ -184,7 +184,7 @@
 
 //列方向位置点
 #define  SENSOR_POS_IN_COLUMN_NULL                        0
-#define  SENSOR_POS_IN_COLUMN_RST                         13
+#define  SENSOR_POS_IN_COLUMN_RST                         12
 
 #define  SENSOR_POS_IN_COLUMN_1                           4
 #define  SENSOR_POS_IN_COLUMN_JUICE_PORT                  12
