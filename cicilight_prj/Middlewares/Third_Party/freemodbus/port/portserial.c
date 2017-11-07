@@ -125,6 +125,7 @@ BOOL
 xMBPortSerialGetByte( CHAR * pucByte )
 {
  *pucByte = (uint8_t)(ptr_slave_modbus_uart_handle->Instance->DR & (uint8_t)0x00FF);
+  APP_LOG_WARNING("%2x\r\n",*pucByte);
  return TRUE;
 }
 

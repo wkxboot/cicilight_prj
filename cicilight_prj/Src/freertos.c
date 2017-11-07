@@ -135,7 +135,7 @@ void StartDefaultTask(void const * argument)
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
   void app_create_user_tasks(void);
-  APP_LOG_DEBUG("等待系统上电完毕...\r\n");//24V和12V上电可能不会同步，所以
+  APP_LOG_DEBUG("等待系统上电完毕...\r\n");//24V�?12V上电可能不会同步，所�?
   osDelay(2000);//等待上电完毕
   app_create_user_tasks();
   for(;;)

@@ -1088,9 +1088,13 @@ static void juice_task(void const * argument)
   BSP_juicing_motor_pwr_on(); 
   osDelay(5);
   BSP_juicing_motor_pwr_dwn(); 
-  osDelay(1000);
+  osDelay(500);
   BSP_juicing_motor_pwr_on(); 
-  while(timeout<JUICING_TIMEOUT_VALUE-100-1005)//留100ms保证消息发送时间
+  osDelay(5);
+  BSP_juicing_motor_pwr_dwn(); 
+  osDelay(500);
+  BSP_juicing_motor_pwr_on();
+  while(timeout<JUICING_TIMEOUT_VALUE-100-1010)//留100ms保证消息发送时间
   {
   msg= osMessageGet(juice_msg_queue_hdl,0); 
   if(msg.status==osEventMessage && msg.value.v == JUICE_STOP_MSG)
@@ -1434,7 +1438,7 @@ static void sync_task(void const * argument)
  }
  APP_LOG_INFO("运行，发送彩灯绿色常亮消息！\r\n");
  osMessagePut(rgb_led_msg_queue_hdl,RGB_LED_MOTION_MSG,0); 
- /*
+ 
  APP_LOG_INFO("检测并准备关闭升降门！\r\n");
  osMessagePut(oh_door_msg_queue_hdl,OH_DOOR_CLOSE_MSG,0);//关闭升降门
  signals=juice_wait_signals(OH_DOOR_REACH_BOT_POS_OK_SIGNAL|OH_DOOR_REACH_BOT_POS_ERR_SIGNAL,OH_DOOR_TIMEOUT_VALUE);
@@ -1453,7 +1457,7 @@ static void sync_task(void const * argument)
  continue;
  }
  APP_LOG_INFO("同步任务收到关闭升降门到位信号！\r\n");
-*/
+
  APP_LOG_INFO("机械手爪子复位抓紧！\r\n");
  osMessagePut(servo1_msg_queue_hdl,SERVO1_ANGLE_CLOSE_MSG,0);
  signals=juice_wait_signals(SERVO1_REACH_POS_OK_SIGNAL,SERVO1_TIMEOUT_VALUE);
@@ -1814,7 +1818,7 @@ static void sync_task(void const * argument)
  cup_timeout=0;
  */
  
- /*
+ 
  osDelay(5000);
  APP_LOG_INFO("关闭升降门！\r\n");
  osMessagePut(oh_door_msg_queue_hdl,OH_DOOR_CLOSE_MSG,0);
@@ -1835,7 +1839,7 @@ static void sync_task(void const * argument)
  } 
  APP_LOG_INFO("同步任务收到升降门到达下限位点信号！\r\n");
  
-*/
+
  /*
  if(BSP_is_cup_in_slot_pos()==JUICE_TRUE)
  {
