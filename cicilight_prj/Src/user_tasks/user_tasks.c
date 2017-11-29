@@ -572,39 +572,32 @@ static void servo2_task(void const * argument)
  osSignalSet(sync_task_hdl,SERVO2_REACH_POS_OK_SIGNAL);
  }
 }
+//机械手滑台错误探测任务
+static void manipulator_detect_task(void const * argument)
+{
+  
+  
+  
+}
 
 //机械手滑台任务
 static void manipulator_task(void const * argument)
 {
- manipulator_state_t manipulator;
+ coordinate_t coordinate;
+
+ manipulator_t manipulator;
 
  osEvent msg;
- uint8_t row_sensor_pos,column_sensor_pos;
- uint8_t row_sensor_state,column_sensor_state;
  //参数初始话
- manipulator.row.active=JUICE_TRUE;
- manipulator.row.cur_pos=SENSOR_POS_IN_ROW_NULL;
- manipulator.row.tar_pos=SENSOR_POS_IN_ROW_NULL;
- manipulator.row.dir=NULL_DIR;
- manipulator.row.run_time=0;
- manipulator.row.sensor_hold_on_time=0;
- 
- manipulator.column.active=JUICE_TRUE;
- manipulator.column.cur_pos=SENSOR_POS_IN_COLUMN_NULL;
- manipulator.column.tar_pos=SENSOR_POS_IN_COLUMN_NULL;
- manipulator.column.dir=NULL_DIR;
- manipulator.column.run_time=0;
- manipulator.column.sensor_hold_on_time=0;
- 
- manipulator.msg_send=JUICE_TRUE;
- 
+
  APP_LOG_INFO("++++++机械手滑台任务开始！\r\n");
  manipulator.row.sensor_state=BSP_get_row_pos_sensor_state();
  manipulator.column.sensor_state=BSP_get_column_pos_sensor_state();
  while(1)
  {
- msg=osMessageGet(manipulator_msg_queue_hdl,0);
- if(msg.status==osEventMessage )
+ msg=osMessageGet(manipulator_msg_queue_hdl,osWaitForever);
+ if(msg.status!=osEventMessage )
+ continue;
  {
  APP_LOG_INFO("机械手滑台任务收到消息！\r\n");
  if(msg.value.v<=MANIPULATOR_STOP_MSG)
@@ -612,58 +605,51 @@ static void manipulator_task(void const * argument)
  APP_LOG_INFO("机械手滑台命令消息！\r\n");
  if(msg.value.v==MANIPULATOR_RESET_POS_MSG)
  {
- row_sensor_pos= SENSOR_POS_IN_ROW_RST;
- column_sensor_pos=SENSOR_POS_IN_COLUMN_RST;
- manipulator.row.cur_pos=SENSOR_POS_IN_ROW_NULL;
- manipulator.column.cur_pos=SENSOR_POS_IN_COLUMN_NULL;
+ manipulator.tar_coordinate=matrix.coordinate[RESET_X_IDX][RESET_Y_IDX];
  APP_LOG_INFO("机械手滑台复位点命令消息！\r\n");
  }
  else if(msg.value.v == MANIPULATOR_STOP_MSG)
  {
- row_sensor_pos= manipulator.row.cur_pos;
- column_sensor_pos=manipulator.column.cur_pos;
  APP_LOG_INFO("机械手滑台停止命令消息！\r\n");
  } 
- else if(manipulator.row.cur_pos==SENSOR_POS_IN_ROW_NULL || manipulator.column.cur_pos==SENSOR_POS_IN_COLUMN_NULL) 
+ else if(manipulator.is_coordinate_valid==JUICE_FALSE) 
  {
  APP_LOG_INFO("机械手没有完成复位，忽略此单步命令！\r\n");
  continue;
- }
- else if(msg.value.v == MANIPULATOR_JUICING_POS_MSG)
+ if(msg.value.v == MANIPULATOR_JUICING_POS_MSG)
  {
- row_sensor_pos= SENSOR_POS_IN_ROW_JUICE_PORT;
- column_sensor_pos=SENSOR_POS_IN_COLUMN_JUICE_PORT;
- APP_LOG_INFO("机械手滑台榨汁口命令消息！\r\n");
+   manipulator.tar_coordinate=matrix.coordinate[JUICING_X_IDX][JUICING_Y_IDX];
+   APP_LOG_INFO("机械手滑台榨汁口命令消息！\r\n");
  }
  else if(msg.value.v == MANIPULATOR_UP_STEP_MSG)
  {
-   if(manipulator.row.cur_pos>=SENSOR_POS_IN_ROW_JUICE_PORT)
+   if(manipulator.cur_coordinate.idx.y>=COORDINATE_MAX_Y_IDX)
    continue;
-   row_sensor_pos=manipulator.row.cur_pos%2==0?manipulator.row.cur_pos+2:manipulator.row.cur_pos+1;
+   manipulator.tar_coordinate=matrix.coordinate[manipulator.cur_coordinate.idx.x][manipulator.cur_coordinate.idx.y+1];
    APP_LOG_INFO("机械手滑台上移一步命令消息！\r\n");
  }
  else if(msg.value.v == MANIPULATOR_DWN_STEP_MSG)
  {
-   if(manipulator.row.cur_pos<=SENSOR_POS_IN_ROW_1LOW)
+   if(manipulator.cur_coordinate.idx.y<=COORDINATE_MIN_Y_IDX)
    continue;
-   row_sensor_pos=manipulator.row.cur_pos%2==0?manipulator.row.cur_pos-2:manipulator.row.cur_pos-1;
+   manipulator.tar_coordinate=matrix.coordinate[manipulator.cur_coordinate.idx.x][manipulator.cur_coordinate.idx.y-1];
    APP_LOG_INFO("机械手滑台下移一步命令消息！\r\n");
  }
  else if(msg.value.v == MANIPULATOR_LEFT_STEP_MSG)
  {
-   if(manipulator.column.cur_pos<=SENSOR_POS_IN_COLUMN_1)
+   if(manipulator.cur_coordinate.idx.x<=COORDINATE_MIN_X_IDX)
    continue;
-   column_sensor_pos=manipulator.column.cur_pos%2==0?manipulator.column.cur_pos-2:manipulator.column.cur_pos-1;
+   manipulator.tar_coordinate=matrix.coordinate[manipulator.cur_coordinate.idx.x-1][manipulator.cur_coordinate.idx.y];
    APP_LOG_INFO("机械手滑台左移一步命令消息！\r\n");
  }
  else if(msg.value.v == MANIPULATOR_RIGHT_STEP_MSG)
  {
-   if(manipulator.column.cur_pos>=SENSOR_POS_IN_COLUMN_5)
+   if(manipulator.cur_coordinate.idx.x>=COORDINATE_MAX_X_IDX)
    continue;
-   column_sensor_pos=manipulator.column.cur_pos%2==0?manipulator.column.cur_pos+2:manipulator.column.cur_pos+1;
+   manipulator.tar_coordinate=matrix.coordinate[manipulator.cur_coordinate.idx.x+1][manipulator.cur_coordinate.idx.y];
    APP_LOG_INFO("机械手滑台右移一步命令消息！\r\n");
  }
- 
+ }
  }
  else
  {

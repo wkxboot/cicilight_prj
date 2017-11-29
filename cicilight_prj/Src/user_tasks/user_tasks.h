@@ -209,13 +209,38 @@ typedef struct
  uint32_t run_time;
 }object_state_t;
 
-//机械手状态机
+
+
+typedef struct 
+{
+ typedef struct 
+ {
+  uint8_t x;
+  uint8_t y;
+ }remap_point;
+ typedef struct
+ {
+  uint8_t x;
+  uint8_t y;
+ }subscript;
+ typedef struct 
+ {
+  int32_t x;
+  int32_t y;
+ }distance;
+}coordinate_t;
+
+typedef struct 
+{
+ coordinate_t coordinate[8][6];
+}matrix_t;
+
+//机械手
 typedef struct
 {
-object_state_t row;
-object_state_t column;
-uint8_t msg_send;
-}manipulator_state_t;
-
+coordinate_t cur_coordinate;
+coordinate_t tar_coordinate;
+uint8_t is_coordinate_valid;
+}manipulator_t;
 
 #endif
