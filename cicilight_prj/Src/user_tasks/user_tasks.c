@@ -580,12 +580,96 @@ static void manipulator_detect_task(void const * argument)
   
 }
 
+static void vertical_motor_param_init()
+{
+ vertical_motor.acceleration_dis=VERTICAL_MOTOR_ACCELERATION_DISTANCE;
+ vertical_motor.deceleration_dis=VERTICAL_MOTOR_DECELERATION_DISTANCE;
+ 
+}
+#define  IS_EQUIVALENT(a,b)  ((a>=b?a-b:b-a)<=PULSES_CNT_EQUIVALENT_TOLERENCE)
+matrix_t juice_pos;
+close_loop_servo_sys_t vertical_servo;
+close_loop_servo_sys_t horizontal_servo;
+static void vertical_motor(void const * argument)
+{
+  osEvent msg;
+  ctl_info_t cmd;
+ //参数初始话
+ APP_LOG_INFO("++++++机械滑台和旋转任务开始！\r\n"); 
+ while(1)
+ {
+ msg=osMessageGet(slideway_msg_queue_hdl,osWaitForever);
+ if(msg.status!=osEventMessage )
+ continue;
+ cmd=(ctl_info_t)msg.value.v;
+ switch(cmd.type)
+ {
+ case SERVO_START:  
+   uint8_t v_tag,h_tag;
+   //uint32_t vertical,horizontal;
+   v_tag=cmd.param.param8[0]-1;
+   h_tag=cmd.param.param8[1]-1;
+   
+   if(v_tag!=vertical_servo.motor.tar_tag)//计算过程控制各阶段的值
+   {
+   vertical_servo.motor.tar_tag=v_tag;//目标标签位置
+   vertical_servo.ctl.tar=juice_pos.coordinate[v_tag][h_tag].vertical;//目标计数值
+   
+   
+   
+   
+   
+   APP_LOG_DEBUG("");
+   }
+   horizontal=juice_pos.coordinate[v_tag][h_tag].horizontal; 
+   
+
+    vertical_servo.ctl.tar=vertical;    
+    if(vertical_motor.active==JUICE_FALSE)//停止状态
+    {
+     
+     APP_LOG_DEBUG("启动垂直方向马达！\r\n");
+    }
+   }
+   break;
+ case SERVO_ERROR:
+   
+ case SERVO_ARRIVE:
+ case SERVO_GOTO_CUP_BOT:
+ case SERVO_LIFT_UP_CUP:
+ case SERVO_PUT_CUP_INTO_SLOT:
+ 
+   
+ case SERVO_PWR_UPDATE:
+   
+   break;
+   
+   break;
+ case SERVO_DEBUG:
+   {
+   }
+   break;
+ default:
+   APP_LOG_WARNING("机械手任务传递了错误参数！\r\n");
+ }
+ if(cmd.type==)
+ {
+ cmd.param.param8[0]
+ }
+                    
+                                
+            
+ if(vertical_motor.cur_pos!=vertical_motor.stop_pos)
+ {
+   
+ }
+  
+}
+}
+
 //机械手滑台任务
 static void manipulator_task(void const * argument)
 {
- coordinate_t coordinate;
-
- manipulator_t manipulator;
 
  osEvent msg;
  //参数初始话
