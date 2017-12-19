@@ -586,7 +586,59 @@ static void vertical_motor_param_init()
  vertical_motor.deceleration_dis=VERTICAL_MOTOR_DECELERATION_DISTANCE;
  
 }
+
+
+
+
 #define  IS_EQUIVALENT(a,b)  ((a>=b?a-b:b-a)<=PULSES_CNT_EQUIVALENT_TOLERENCE)
+
+//快速开平方
+float my_sqrt(float x)
+{
+ float xhalf = 0.5f*x;
+ int i = *(int*)&x; //get bits for floating VALUE 
+ i = 0x5f375a86 - (i >> 1); // gives initial guess y0
+ x = *(float*)&i; // convert bits BACK to float
+ x = x*(1.5f - xhalf*x*x); // Newton step, repeating increases accuracy
+ return 1/x;  
+}
+
+void vertical_servo_set_new_pos(close_loop_servo_sys_t *ptr_servo,uint32_t pos)
+{
+  int32_t dis,brake_dis;
+  uint8_t delta_v;
+  int8_t dir=1;
+  if(ptr_servo==NULL)
+    return;
+  if(ptr_servo->ctl.tar==pos)
+    return; 
+  ptr_servo->ctl.tar=pos;//目标计数值
+  ptr_servo->ctl.active=JUICE_TRUE; 
+
+  if(ptr_servo->motor.dir==NEGATIVE_DIR)
+  dir=-1;  
+  
+  dis=dir*(int32_t)(ptr_servo->ctl.tar-ptr_servo->encoder.cur);//计算剩余距离 
+  if(ptr_servo->ctl.cur_pwr<ptr_servo->ctl.stop_pwr)
+  brake_dis=0;
+  else
+  {
+  delta_v=ptr_servo->ctl.cur_pwr-ptr_servo->ctl.stop_pwr;
+  brake_dis=(int32_t)(delta_v*delta_v*ptr_servo->ctl.deceleration_cnt/10000);
+  }
+  if(dis > brake_dis)//如果剩余距离大于停车距离
+  {
+   ptr_servo->ctl.stop=ptr_servo->ctl.tar;
+   APP_LOG_INFO("设置停止点==目标点：%d\r\n",ptr_servo->ctl.stop);
+  }
+  else
+  {
+   ptr_servo->ctl.stop+=brake_dis*dir;
+   APP_LOG_INFO("设置停止点!=目标点：%d\r\n",ptr_servo->ctl.stop);
+  }
+}
+
+void 
 matrix_t juice_pos;
 close_loop_servo_sys_t vertical_servo;
 close_loop_servo_sys_t horizontal_servo;
@@ -606,43 +658,80 @@ static void vertical_motor(void const * argument)
  {
  case SERVO_START:  
    uint8_t v_tag,h_tag;
-   //uint32_t vertical,horizontal;
+   uint32_t vertical,horizontal;
    v_tag=cmd.param.param8[0]-1;
    h_tag=cmd.param.param8[1]-1;
-   
-   if(v_tag!=vertical_servo.motor.tar_tag)//计算过程控制各阶段的值
-   {
-   vertical_servo.motor.tar_tag=v_tag;//目标标签位置
-   vertical_servo.ctl.tar=juice_pos.coordinate[v_tag][h_tag].vertical;//目标计数值
-   
-   
-   
-   
-   
-   APP_LOG_DEBUG("");
-   }
-   horizontal=juice_pos.coordinate[v_tag][h_tag].horizontal; 
-   
 
-    vertical_servo.ctl.tar=vertical;    
-    if(vertical_motor.active==JUICE_FALSE)//停止状态
-    {
-     
-     APP_LOG_DEBUG("启动垂直方向马达！\r\n");
-    }
-   }
+   horizontal_servo.ctl.tar=juice_pos.coordinate[v_tag][h_tag].horizontal;
+   horizontal_servo.ctl.active=JUICE_TRUE;
+   
+   APP_LOG_DEBUG("设置了新的目标点 垂直：%d 水平：%d \r\n",vertical_servo.ctl.tar,horizontal_servo.ctl.tar);
    break;
  case SERVO_ERROR:
-   
- case SERVO_ARRIVE:
- case SERVO_GOTO_CUP_BOT:
- case SERVO_LIFT_UP_CUP:
- case SERVO_PUT_CUP_INTO_SLOT:
- 
-   
- case SERVO_PWR_UPDATE:
-   
+   juice_set_fault_code(cmd.param.param8[1]);
+   APP_LOG_ERROR("故障电机类型：%d  故障码：%d \r\n",cmd.param.param8[0],cmd.param.param8[1]);
+   if(cmd.param.param8[0]==VERTICAL_SERVO_MOTOR)
+   {
+   vertical_servo.motor.active=JUICE_FALSE;
+   vertical_servo.ctl.active=JUICE_FALSE;
+   vertical_servo.ctl.cur_pwr=0;
+   BSP_pwr_dwn_vertical_motor();   
+   horizontal_servo.ctl.tar=horizontal_servo.ctl.stop;//水平电机正常停止转动
+   }
+   else if(cmd.param.param8[0]==HORIZONGTAL_SERVO_MOTOR)
+   {
+   horizontal_servo.motor.active=JUICE_FALSE;
+   horizontal_servo.ctl.active=JUICE_FALSE;
+   horizontal_servo.ctl.cur_pwr=0;
+   BSP_pwr_dwn_horizontal_motor(); 
+   vertical_servo.ctl.tar=vertical_servo.ctl.stop;//水平电机正常停止转动 
+   }
    break;
+ case SERVO_ARRIVE:
+  if(cmd.param.param8[0]== VERTICAL_SERVO_MOTOR)
+  {
+    if(vertical_servo.ctl.stop!=vertical_servo.ctl.tar)
+    {
+    vertical_servo.ctl.stop=vertical_servo.ctl.tar;
+    APP_LOG_DEBUG("停止后，重新开始运动！\r\n");
+    }
+    else
+    {
+    BSP_pwr_dwn_vertical_motor(); 
+    vertical_servo.ctl.cur_pwr=0;
+    vertical_servo.motor.dir=NULL_DIR;
+    APP_LOG_DEBUG("垂直电机到达目标位置，当前值：%d\r\n",vertical_servo.encoder.cur); 
+    }  
+  }
+  else if(cmd.param.param8[0]== HORIZONTAL_SERVO_MOTOR)
+  {
+    if(horizontal_servo.ctl.stop!=horizontal_servo.ctl.tar)
+    {
+    vertical_servo.ctl.stop=vertical_servo.ctl.tar;
+    APP_LOG_DEBUG("停止后，重新开始运动！\r\n"); 
+    }
+    else
+    {
+    BSP_pwr_dwn_horizontal_motor(); 
+    horizontal_servo.ctl.cur_pwr=0;
+    horizontal_servo.motor.dir=NULL_DIR;
+    APP_LOG_DEBUG("垂直电机到达目标位置，当前值：%d\r\n",horizontal_servo.encoder.cur); 
+    }
+  }
+  break;
+ case SERVO_GOTO_CUP_BOT:
+   vertical_servo_set_new_pos(uint32_t pos);
+   break;
+ case SERVO_LIFT_UP_CUP:
+   vertical_servo_set_new_pos(uint32_t pos);
+   break;
+ case SERVO_GOTO_SLOT:
+   vertical_servo_set_new_pos(uint32_t pos);
+   break;
+ case SERVO_PUT_CUP_INTO_SLOT:
+   vertical_servo_set_new_pos(uint32_t pos);
+   break;
+ case SERVO_PWR_UPDATE:
    
    break;
  case SERVO_DEBUG:
@@ -652,18 +741,8 @@ static void vertical_motor(void const * argument)
  default:
    APP_LOG_WARNING("机械手任务传递了错误参数！\r\n");
  }
- if(cmd.type==)
- {
- cmd.param.param8[0]
- }
-                    
-                                
-            
- if(vertical_motor.cur_pos!=vertical_motor.stop_pos)
- {
-   
- }
-  
+
+                   
 }
 }
 

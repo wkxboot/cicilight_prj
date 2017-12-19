@@ -197,6 +197,7 @@
 
 typedef struct
 {
+ uint8_t active;
  uint8_t dir;
  uint8_t cur_tag;//位置标号，与具体计数单位无关0-255
  uint8_t tar_tag;//位置标号，与具体计数单位无关0-255
@@ -257,15 +258,16 @@ typedef struct
 {
   uint8_t active;
   uint8_t cur_pwr;
-  uint8_t start_pwr;
+  uint8_t start_pwr; 
   uint8_t stop_pwr;
-
+  uint32_t max_pwr_value;
+  
   uint32_t tar;
   uint32_t start;
   uint32_t stop;
-  uint32_t deceleration;
   uint32_t acceleration;
-
+  uint32_t deceleration;
+  
   uint32_t acceleration_cnt;
   uint32_t deceleration_cnt;
   uint32_t run_time;
