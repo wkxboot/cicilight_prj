@@ -260,8 +260,10 @@ typedef struct
   uint8_t cur_pwr;
   uint8_t start_pwr; 
   uint8_t stop_pwr;
+  uint8_t pwr_step;//功率步进值 
+  uint8_t max_pwr;//工作功率
   uint32_t max_pwr_value;
-  
+ 
   uint32_t tar;
   uint32_t start;
   uint32_t stop;
