@@ -596,8 +596,22 @@ matrix_t juice_pos;
 close_loop_servo_sys_t vertical_servo;
 close_loop_servo_sys_t horizontal_servo;
 
+static void servo_set_ctl(close_loop_servo_sys_t *ptr_servo,uint8_t value)
+{
+ptr_servo->ctl.active=value;  
+}
+static void servo_set_servo(close_loop_servo_sys_t *ptr_servo,uint8_t value)
+{
+ptr_servo->active=value;  
+}
+static void servo_set_motor(close_loop_servo_sys_t *ptr_servo,uint8_t value)
+{
+ ptr_servo->motor.active=value;   
+}
 
-void servo_set_new_pos(close_loop_servo_sys_t *ptr_servo,uint32_t pos)
+
+
+static void servo_set_pos(close_loop_servo_sys_t *ptr_servo,uint32_t pos)
 {
   uint32_t brake_dis,brake_pos;
   uint8_t delta_v;
@@ -609,7 +623,7 @@ void servo_set_new_pos(close_loop_servo_sys_t *ptr_servo,uint32_t pos)
   ptr_servo->ctl.tar=pos;//目标计数值 
   ptr_servo->ctl.active=JUICE_TRUE; 
  
-uint32_t servo_calculate_brake_dis(close_loop_servo_sys_t *ptr_servo)
+static uint32_t servo_calculate_brake_dis(close_loop_servo_sys_t *ptr_servo)
 {
   uint32_t brake_dis;
   if(ptr_servo==NULL)
@@ -619,59 +633,75 @@ uint32_t servo_calculate_brake_dis(close_loop_servo_sys_t *ptr_servo)
   else
   {
   delta_v=ptr_servo->ctl.cur_pwr-ptr_servo->ctl.stop_pwr;
-  brake_dis=delta_v*delta_v*ptr_servo->ctl.deceleration_cnt/10000;
+  brake_dis=delta_v*ptr_servo->ctl.deceleration_cnt/10000;
   }
 }
 }
-APP_LOG_INFO("设置停止点!=目标点：%d\r\n",ptr_servo->ctl.stop);
-APP_LOG_INFO("设置停止点==目标点：%d\r\n",ptr_servo->ctl.stop);
- 
+
 uint32_t servo_calculate_brake_pos(close_loop_servo_sys_t *ptr_servo,uint32_t brake_dis)
 {
+  int8_t dir=1;
   uint32_t brake_pos;
   if(ptr_servo==NULL)
     return;
-  if(ptr_servo->motor.dir!=NEGATIVE_DIR)//正转或者停止状态
-  brake_pos=ptr_servo->encoder.cur+brake_dis;
-  else
-  brake_pos=ptr_servo->encoder.cur-brake_dis;
-  
+  if(ptr_servo->motor.dir==NEGATIVE_DIR)//反转
+    dir=-1;
+  brake_pos=ptr_servo->encoder.cur+brake_dis*dir;  
   return brake_pos;
 }
 
-void servo_set_stop_pos(close_loop_servo_sys_t *ptr_servo,uint32_t brake_pos)
+static void servo_set_stop_pos(close_loop_servo_sys_t *ptr_servo,uint32_t brake_pos)
 {
+  int8_t dir=1;
   if(ptr_servo==NULL)
     return; 
-  if(ptr_servo->motor.dir!=NEGATIVE_DIR)//正转或者停止状态
-  {
-  if(brake_pos < ptr_servo->ctl.tar)
+  if(ptr_servo->motor.dir==NEGATIVE_DIR)//反转
+  dir=-1;
+  
+  if(brake_pos*dir < ptr_servo->ctl.tar*dir)
   {
    ptr_servo->ctl.stop= ptr_servo->ctl.tar;
-   APP_LOG_INFO("设置停止点==目标点：%d\r\n",ptr_servo->ctl.stop);
+   APP_LOG_INFO("设置停止点==目标点：%d.\r\n",ptr_servo->ctl.stop);
   }
   else
   {
    ptr_servo->ctl.stop= brake_pos;
-   APP_LOG_INFO("设置停止点!=目标点：%d\r\n",ptr_servo->ctl.stop);
+   APP_LOG_INFO("设置停止点!=目标点：%d.\r\n",ptr_servo->ctl.stop);
   }  
-  }
-  else
-  {
-  if(brake_pos < ptr_servo->ctl.tar)
-  {
-   ptr_servo->ctl.stop= brake_pos;
-   APP_LOG_INFO("设置停止点!=目标点：%d\r\n",ptr_servo->ctl.stop);
-  }
-  else
-  {
-   ptr_servo->ctl.stop= ptr_servo->ctl.tar;
-   APP_LOG_INFO("设置停止点==目标点：%d\r\n",ptr_servo->ctl.stop);
-  } 
-  }
 }
+
+static void servo_calculate_acc_dec_pos(close_loop_servo_sys_t *ptr_servo)
+{
+  uint8_t dir=1;
+  uint32_t dis,dis_acc_dec;
+  
+  if(ptr_servo==NULL)
+    return;
+  if(ptr_servo->motor.dir==NEGATIVE_DIR)
+  dir=-1;
+  
+  dis=(ptr_servo->ctl.stop-ptr_servo->ctl.start)*dir;
+  dis_acc_dec=ptr_servo->ctl.acceleration_cnt+ptr_servo->ctl.deceleration_cnt;
+  if(dis > dis_acc_dec)
+  {
+    ptr_servo->ctl.acceleration_stop=ptr_servo->ctl.start+ptr_servo->ctl.acceleration_cnt*dir;
+    ptr_servo->ctl.deceleration_start=ptr_servo->ctl.stop-ptr_servo->ctl.deceleration_cnt*dir;
+  }
+  else
+  {
+    ptr_servo->ctl.acceleration_stop=ptr_servo->ctl.start+((ptr_servo->ctl.acceleration_cnt*dis/dis_acc_dec)*dir);
+    ptr_servo->ctl.deceleration_start=ptr_servo->ctl.acceleration_stop;
+  }
+  APP_LOG_INFO("计算的加速停止点为：%d ;减速开始点为：%d.\r\n",ptr_servo->ctl.acceleration_stop,ptr_servo->ctl.deceleration_start);
+}
+
+
+
+
+
 #define  PULSES_CNT_EQUIVALENT_TOLERENCE    5
 #define  IS_EQUIVALENT(a,b)  ((a>=b?a-b:b-a)<=PULSES_CNT_EQUIVALENT_TOLERENCE)
+/*
 //快速开平方
 float my_sqrt(float x)
 {
@@ -682,30 +712,56 @@ float my_sqrt(float x)
  x = x*(1.5f - xhalf*x*x); // Newton step, repeating increases accuracy
  return 1/x;  
 }
-uint8_t servo_calculate_real_time_velocity(close_loop_servo_sys_t *ptr_servo)
+*/
+
+
+/*
+计算实时速度，速度比等于路程比--2次曲线加速减速
+*/
+static uint8_t servo_calculate_real_time_velocity(close_loop_servo_sys_t *ptr_servo)
 {
-  uint32_t acce;
+  int8_t pwr=ptr_servo->ctl.cur_pwr;
+  int8_t dir=1;
+  
   if(ptr_servo==NULL)
-    return;
+    return pwr; 
+  if(ptr_servo->motor.dir==NEGATIVE_DIR)
+  dir=-1;
   
-  if(ptr_servo->ctl.cur_pwr>=ptr_servo->ctl.max_pwr)
-  return ptr_servo->ctl.max_pwr;
-  
-  
-  if(ptr_servo->ctl.cur_pwr < ptr_servo->ctl.stop_pwr)
+  if(ptr_servo->encoder.cur*dir < ptr_servo->ctl.acceleration_stop*dir)
   {
-   
+    pwr=(ptr_servo->encoder.cur-ptr_servo->ctl.start)*dir*100/ptr_servo->ctl.acceleration_cnt;
+    if(pwr<(int8_t)(-PULSES_CNT_EQUIVALENT_TOLERENCE*100/ptr_servo->ctl.acceleration_cnt))
+    goto pos_err_handle;
   }
-  my_sqrt(ptr_servo->ctl.cur);
+  else if(ptr_servo->encoder.cur*dir >= ptr_servo->ctl.deceleration_start*dir)
+  {
+    pwr=(ptr_servo->ctl.stop-ptr_servo->encoder.cur)*dir*100/ptr_servo->ctl.deceleration_cnt; 
+    if(pwr<(int8_t)(-PULSES_CNT_EQUIVALENT_TOLERENCE*100/ptr_servo->ctl.deceleration_cnt))
+    goto pos_err_handle;
+  }
+  if(pwr<0)/*应该忽略启动抖动*/
+  pwr=ptr_servo->ctl.cur_pwr;
+  return pwr;
+  
+err_handle:
+  pwr=ptr_servo->ctl.cur_pwr;
+  osMessagePut(pwr);
+  /*位置出现故障，需重新计算新的位置*/
+  ctl_info_t cmd; 
+  cmd.type=SERVO_START;
+  cmd.param.param8[0]=ptr_servo->ctl.tar;
+  
+  osMessagePut();
 }
 
 
 #define  HORIZONTAL_ENCODER_RESOLUTION  400
 
-uint32_t servo_calculate_horizontal_new_pos(uint32_t pos_tag)
+static uint32_t servo_calculate_horizontal_pos(uint32_t pos_tag)
 {
   uint32_t base_pos,pre_pos,next_pos,brake_pos;
-  base_pos=horizontal_servo.encoder.cur-horizontal_servo.encoder.cur%HORIZONTAL_ENCODER_RESOLUTION);
+  base_pos=horizontal_servo.encoder.cur-horizontal_servo.encoder.cur%HORIZONTAL_ENCODER_RESOLUTION;
   pre_pos=pos_tag+base_pos;
   next_pos=pre_pos+HORIZONTAL_ENCODER_RESOLUTION;
   brake_pos= servo_calculate_brake_pos(&horizontal_servo);
@@ -718,6 +774,21 @@ uint32_t servo_calculate_horizontal_new_pos(uint32_t pos_tag)
   return pre_pos;
 }
 
+static uint8_t servo_get_pos(ctl_info_t *ptr_cmd,uint32_t *ptr_v,uint32_t *ptr_h)
+{
+   uint8_t v_tag,h_tag;
+   if(ptr_cmd==NULL||ptr_v==NULL||ptr_h==NULL)
+     return JUICE_FALSE;
+   v_tag=cmd->param.param8[0]-1;
+   h_tag=cmd->param.param8[1]-1;
+
+   *ptr_v=juice_pos.coordinate[v_tag][h_tag].vertical;  
+   *ptr_h=juice_pos.coordinate[v_tag][h_tag].horizontal;
+   
+   return JUICE_TRUE;
+}
+
+static void servo_process_error()
 
 
 static void manipulator_task(void const * argument)
@@ -734,16 +805,12 @@ static void manipulator_task(void const * argument)
  cmd=(ctl_info_t)msg.value.v;
  switch(cmd.type)
  {
- case SERVO_START:  
-   uint8_t v_tag,h_tag;
+ case SERVO_GOTO_COORDINATE:  
    uint32_t vertical,horizontal;
-   v_tag=cmd.param.param8[0]-1;
-   h_tag=cmd.param.param8[1]-1;
-
-   horizontal_servo.ctl.tar=juice_pos.coordinate[v_tag][h_tag].horizontal;
-   horizontal_servo.ctl.active=JUICE_TRUE;
-   
+   servo_get_pos(&cmd,&vertical,&horizontal);  
    APP_LOG_DEBUG("设置了新的目标点 垂直：%d 水平：%d \r\n",vertical_servo.ctl.tar,horizontal_servo.ctl.tar);
+   servo_set_pos(&vertical_servo,vertical);
+   servo_set_pos(&horizontal_servo,horizontal);
    break;
  case SERVO_ERROR:
    juice_set_fault_code(cmd.param.param8[1]);
@@ -798,13 +865,13 @@ static void manipulator_task(void const * argument)
   }
   break;
  case SERVO_GOTO_CUP_BOT:
-   vertical_servo_set_new_pos(uint32_t pos);
+   servo_set_new_pos(uint32_t pos);
    break;
  case SERVO_LIFT_UP_CUP:
-   vertical_servo_set_new_pos(uint32_t pos);
+  servo_set_new_pos(uint32_t pos);
    break;
  case SERVO_GOTO_SLOT:
-   vertical_servo_set_new_pos(uint32_t pos);
+   servo_set_new_pos(uint32_t pos);
    break;
  case SERVO_PUT_CUP_INTO_SLOT:
    vertical_servo_set_new_pos(uint32_t pos);

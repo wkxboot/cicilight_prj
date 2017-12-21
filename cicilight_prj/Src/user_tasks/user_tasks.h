@@ -267,8 +267,8 @@ typedef struct
   uint32_t tar;
   uint32_t start;
   uint32_t stop;
-  uint32_t acceleration;
-  uint32_t deceleration;
+  uint32_t acceleration_stop;
+  uint32_t deceleration_start;
   
   uint32_t acceleration_cnt;
   uint32_t deceleration_cnt;
