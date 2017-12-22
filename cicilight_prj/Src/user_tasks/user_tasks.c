@@ -600,42 +600,30 @@ static void servo_set_motor(close_loop_servo_sys_t *ptr_servo,uint8_t value)
  ptr_servo->motor.active=value;   
 }
 
-static void servo_set_tar_pos(close_loop_servo_sys_t *ptr_servo,uint32_t pos)
+static uint8_t servo_set_tar_pos(close_loop_servo_sys_t *ptr_servo,uint32_t pos)
 {
-  uint32_t brake_dis,brake_pos;
-  uint8_t delta_v;
-  if(ptr_servo==NULL)
-    return;
-  if(ptr_servo->ctl.tar==pos)
-    return; 
-  
+  APP_ASSERT(ptr_servo); 
   ptr_servo->ctl.tar=pos;//目标计数值 
   ptr_servo->ctl.active=JUICE_TRUE; 
+  return JUICE_TRUE;
 }
-static uint32_t servo_calculate_limit_brake_dis(close_loop_servo_sys_t *ptr_servo)
+
+static uint32_t servo_calculate_limit_brake_pos(close_loop_servo_sys_t *ptr_servo)
 {
-  uint32_t brake_dis;
-  if(ptr_servo==NULL)
-  APP_ERROR_HANDLER(APP_ERROR_NULL);
-  if(ptr_servo->ctl.cur_pwr < ptr_servo->ctl.stop_pwr)
+  int8_t delta_pwr,dir=1;
+  uint32_t brake_dis,brake_pos;
+  APP_ASSERT(ptr_servo);
+  /*计算刹车距离*/
+  if(ptr_servo->ctl.cur_pwr <= ptr_servo->ctl.stop_pwr)
   brake_dis=0;
   else
   {
   delta_pwr=ptr_servo->ctl.cur_pwr-ptr_servo->ctl.stop_pwr;
   brake_dis=delta_pwr*ptr_servo->ctl.deceleration_cnt/100;
   }
-  return brake_dis;
-}
-
-static uint32_t servo_calculate_limit_brake_pos_(close_loop_servo_sys_t *ptr_servo,uint32_t brake_dis)
-{
-  int8_t dir=1;
-  uint32_t brake_pos;
-  if(ptr_servo==NULL)
-  APP_ERROR_HANDLER(APP_ERROR_NULL);
-  
+  /*计算刹车点*/
   if(ptr_servo->motor.dir==NEGATIVE_DIR)//反转
-    dir=-1;
+  dir=-1;
   brake_pos=ptr_servo->encoder.cur+brake_dis*dir;  
   return brake_pos;
 }
@@ -689,13 +677,15 @@ static void servo_calculate_acc_dec_pos(close_loop_servo_sys_t *ptr_servo)
 /*
  由循环位置计算连续位置
 */
-static uint32_t manipulator_calculate_horizontal_pos(close_loop_servo_sys_t *ptr_servo,uint32_t rotary_pos)
+static uint32_t manipulator_calculate_horizontal_pos(manipulator_servo_t *ptr_manipulator,uint32_t rotary_pos)
 {
   uint32_t base_pos,pre_pos,next_pos,brake_pos;
-  base_pos=ptr_servo->encoder.cur-(ptr_servo->encoder.cur%ptr_servo->encoder.resolution);
-  pre_pos=pos_tag+base_pos;
-  next_pos=pre_pos+ptr_servo->encoder.resolution;
-  brake_pos= servo_calculate_brake_pos(ptr_servo);
+  APP_ASSERT(ptr_manipulator);
+  
+  base_pos=ptr_manipulator->horizontal_servo.encoder.cur/ptr_manipulator->horizontal_servo.encoder.resolution*ptr_manipulator->horizontal_servo.encoder.resolution;
+  pre_pos=rotary_pos+base_pos;
+  next_pos=pre_pos+ptr_manipulator->horizontal_servo.encoder.resolution; 
+  brake_pos=servo_calculate_limit_brake_pos(&ptr_manipulator->horizontal_servo);
   if(brake_pos > (pre_pos+next_pos)/2)
   {
    APP_LOG_INFO("水平伺服计算的目标点next_pos：%d.\r\n",next_pos); 
@@ -705,67 +695,116 @@ static uint32_t manipulator_calculate_horizontal_pos(close_loop_servo_sys_t *ptr
   return pre_pos;
 }
 
-static uint8_t manipulator_get_pos(coordinate_t *ptr_coordinate,ctl_info_t *ptr_cmd,uint32_t *ptr_v,uint32_t *ptr_h)
-{
-   uint8_t v_tag,h_tag;
-   uint32_t h;
-   
-   if(ptr_coordinate==NULL||ptr_cmd==NULL||ptr_v==NULL||ptr_h==NULL)
-     return JUICE_FALSE;
-   
-   v_tag=ptr_cmd->param8[0]-1;
-   h_tag=ptr_cmd->param8[1]-1;
-   
-   if(ptr_cmd->type==MANIPULATOR_GOTO_CUP_TOP)
-   *ptr_v=ptr_coordinate->array[v_tag][h_tag].vertical.cup_top;  
-   else if(ptr_cmd->type==MANIPULATOR_GOTO_CUP_BOT)
-   *ptr_v=ptr_coordinate->array[v_tag][h_tag].vertical.cup_bot;  
-   else if(ptr_cmd->type==MANIPULATOR_LIFT_UP_CUP)
-   *ptr_v=ptr_coordinate->array[v_tag][h_tag].vertical.cup_lift_up;
-   else if(ptr_cmd->type==MANIPULATOR_GOTO_RESET)   
-   *ptr_v=ptr_coordinate->reset.vertical.sys;
-   else if(ptr_cmd->type==MANIPULATOR_GOTO_STANDBY)   
-   *ptr_v=ptr_coordinate->standby.vertical.sys;
-   else
-   {
-   APP_LOG_ERROR("错误！命令指针信息类型错误！ptr_cmd->type:%d\r\n",ptr_cmd->type);
-   return JUICE_FALSE;
-   }
-  /*重新计算水平位置*/
-   *ptr_h=manipulator_calculate_horizontal_pos(&ptr_manipulator->horizontal_servo,ptr_coordinate->array[v_tag][h_tag].horizontal);
-      
-   return JUICE_TRUE;
+static uint8_t get_pos_tag_from_ctl_info(ctl_info_t *ptr_cmd,uint8_t *ptr_v,uint8_t *ptr_h)
+{    
+  APP_ASSERT(ptr_cmd);
+  APP_ASSERT(ptr_v);
+  APP_ASSERT(ptr_h);
+  
+  *ptr_v=ptr_cmd->param8[0]-1;
+  *ptr_h=ptr_cmd->param8[1]-1; 
+  return JUICE_TRUE;
 }
+static uint8_t manipulator_get_cup_top_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd,uint32_t *ptr_v,uint32_t *ptr_h)
+{
+  uint8_t v_tag,h_tag;
+  APP_ASSERT(ptr_manipulator);
+  APP_ASSERT(ptr_cmd);
+  APP_ASSERT(ptr_v);
+  APP_ASSERT(ptr_h); 
+  get_pos_tag_from_ctl_info(ptr_cmd,&v_tag,&h_tag); 
+  /*重新计算水平位置*/
+ *ptr_h=manipulator_calculate_horizontal_pos(ptr_manipulator,ptr_manipulator->juice_pos.array[v_tag][h_tag].horizontal);
+ *ptr_v=ptr_manipulator->juice_pos.array[v_tag][h_tag].vertical.cup_top;
+ return JUICE_TRUE;
+}
+static uint8_t manipulator_get_cup_bot_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd,uint32_t *ptr_v,uint32_t *ptr_h)
+{
+  uint8_t v_tag,h_tag;
+  APP_ASSERT(ptr_manipulator);
+  APP_ASSERT(ptr_cmd);
+  APP_ASSERT(ptr_v);
+  APP_ASSERT(ptr_h); 
+  get_pos_tag_from_ctl_info(ptr_cmd,&v_tag,&h_tag); 
+    /*重新计算水平位置*/
+  *ptr_h=manipulator_calculate_horizontal_pos(ptr_manipulator,ptr_manipulator->juice_pos.array[v_tag][h_tag].horizontal);
+  *ptr_v=ptr_manipulator->juice_pos.array[v_tag][h_tag].vertical.cup_bot;
+ return JUICE_TRUE;
+}
+static uint8_t manipulator_get_lift_up_cup_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd,uint32_t *ptr_v,uint32_t *ptr_h)
+{
+  uint8_t v_tag,h_tag;
+  APP_ASSERT(ptr_manipulator);
+  APP_ASSERT(ptr_cmd);
+  APP_ASSERT(ptr_v);
+  APP_ASSERT(ptr_h); 
+  get_pos_tag_from_ctl_info(ptr_cmd,&v_tag,&h_tag); 
+    /*重新计算水平位置*/
+  *ptr_h=manipulator_calculate_horizontal_pos(ptr_manipulator,ptr_manipulator->juice_pos.array[v_tag][h_tag].horizontal);
+  *ptr_v=ptr_manipulator->juice_pos.array[v_tag][h_tag].vertical.cup_lift_up;
+ return JUICE_TRUE;
+}
+
+static uint8_t manipulator_get_juicing_pos(manipulator_servo_t *ptr_manipulator,uint32_t *ptr_v,uint32_t *ptr_h)
+{
+  APP_ASSERT(ptr_manipulator);
+  APP_ASSERT(ptr_v);
+  APP_ASSERT(ptr_h); 
+  /*重新计算水平位置*/
+  *ptr_h=manipulator_calculate_horizontal_pos(ptr_manipulator,ptr_manipulator->juice_pos.juicing.horizontal);
+  *ptr_v=ptr_manipulator->juice_pos.juicing.vertical.sys;
+ return JUICE_TRUE;
+}
+static uint8_t manipulator_get_standby_pos(manipulator_servo_t *ptr_manipulator,uint32_t *ptr_v,uint32_t *ptr_h)
+{
+  APP_ASSERT(ptr_manipulator);
+  APP_ASSERT(ptr_v);
+  APP_ASSERT(ptr_h); 
+   /*重新计算水平位置*/
+  *ptr_h=manipulator_calculate_horizontal_pos(ptr_manipulator,ptr_manipulator->juice_pos.standby.horizontal);
+  *ptr_v=ptr_manipulator->juice_pos.standby.vertical.sys;
+ return JUICE_TRUE;
+}
+
+
+
+
+static uint8_t servo_process_pos(close_loop_servo_t *ptr_servo,uint32_t pos)
+{
+  uint32 lb_dis,lb_pos;
+  
+  if(ptr_servo==NULL)
+  return JUICE_FALSE;
+  
+  /*设置伺服系统目标点*/
+  servo_set_tar_pos(ptr_servo,pos);
+  /*计算伺服系统当前速度下的极限刹车距离*/
+  lb_dis=servo_calculate_limit_brake_dis(ptr_servo);
+  /*计算伺服当前速度下的极限刹车点*/
+  lb_pos=servo_calculate_limit_brake_pos(ptr_servo,lb_dis);
+  /*计算伺服当前速度下的停车点*/
+  servo_calculate_stop_pos(ptr_servo,lb_pos);
+  /*计算伺服当前速度下的加速点和减速点*/
+  servo_calculate_acc_dec_pos(ptr_servo); 
+  
+  return JUICE_TRUE; 
+}
+
+
+
 static uint8_t  manipulator_process_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
 {
-  uint32_t vertical,horizontal,lb_dis,lb_pos;
+  uint32_t vertical,horizontal;
   
   if(ptr_manipulator==NULL || ptr_cmd==NULL)
     return JUICE_FALSE;  
   if(coordinate_get_pos(&ptr_manipulator->juice_pos,ptr_cmd,&vertical,&horizontal)!=JUICE_TRUE)
     return JUICE_FALSE; 
-  /*设置目标点*/
-  servo_set_tar_pos(&ptr_manipulator->vertical_servo,vertical);
-  servo_set_tar_pos(&ptr_manipulator->horizontal_servo,horizontal);
+  /*处理垂直方向伺服系统参数*/
+  servo_process_pos(&ptr_manipulator->vertical_servo,vertical);
+  /*处理水平方向伺服系统参数*/
+  servo_process_pos(&ptr_manipulator->horizontal_servo,horizontal);
   
-  /*计算垂直方向伺服系统当前速度下的极限刹车距离*/
-  lb_dis=servo_calculate_limit_brake_dis(&ptr_manipulator->vertical_servo);
-  /*计算垂直方向伺服当前速度下的极限刹车点*/
-  lb_pos=servo_calculate_limit_brake_pos_(&ptr_manipulator->vertical_servo,lb_dis);
-  /*计算垂直方向伺服当前速度下的停车点*/
-  servo_calculate_stop_pos(&ptr_manipulator->vertical_servo,lb_pos);
-  /*计算垂直方向伺服当前速度下的加速点和减速点*/
-  servo_calculate_acc_dec_pos(&ptr_manipulator->vertical_servo);
-  
-  /*计算水平方向伺服系统当前速度下的极限刹车距离*/
-  lb_dis=servo_calculate_limit_brake_dis(&ptr_manipulator->horizontal_servo);
-  /*计算水平方向伺服当前速度下的极限刹车点*/
-  lb_pos=servo_calculate_limit_brake_pos_(&ptr_manipulator->horizontal_servo,lb_dis);
-  /*计算水平方向伺服当前速度下的停车点*/
-  servo_calculate_stop_pos(&ptr_manipulator->horizontal_servo,lb_pos);
-  /*计算水平方向伺服当前速度下的加速点和减速点*/
-  servo_calculate_acc_dec_pos(&ptr_manipulator->horizontal_servo);
- 
   return JUICE_TRUE;
 }
 
