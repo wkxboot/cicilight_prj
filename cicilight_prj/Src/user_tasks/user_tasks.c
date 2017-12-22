@@ -587,15 +587,6 @@ static void vertical_motor_param_init()
  
 }
 
-
-
-
-
-
-matrix_t juice_pos;
-close_loop_servo_sys_t vertical_servo;
-close_loop_servo_sys_t horizontal_servo;
-
 static void servo_set_ctl(close_loop_servo_sys_t *ptr_servo,uint8_t value)
 {
 ptr_servo->ctl.active=value;  
@@ -609,9 +600,7 @@ static void servo_set_motor(close_loop_servo_sys_t *ptr_servo,uint8_t value)
  ptr_servo->motor.active=value;   
 }
 
-
-
-static void servo_set_pos(close_loop_servo_sys_t *ptr_servo,uint32_t pos)
+static void servo_set_tar_pos(close_loop_servo_sys_t *ptr_servo,uint32_t pos)
 {
   uint32_t brake_dis,brake_pos;
   uint8_t delta_v;
@@ -622,35 +611,36 @@ static void servo_set_pos(close_loop_servo_sys_t *ptr_servo,uint32_t pos)
   
   ptr_servo->ctl.tar=pos;//目标计数值 
   ptr_servo->ctl.active=JUICE_TRUE; 
- 
-static uint32_t servo_calculate_brake_dis(close_loop_servo_sys_t *ptr_servo)
+}
+static uint32_t servo_calculate_limit_brake_dis(close_loop_servo_sys_t *ptr_servo)
 {
   uint32_t brake_dis;
   if(ptr_servo==NULL)
-    return;
-  if(ptr_servo->ctl.cur_pwr<ptr_servo->ctl.stop_pwr)
+  APP_ERROR_HANDLER(APP_ERROR_NULL);
+  if(ptr_servo->ctl.cur_pwr < ptr_servo->ctl.stop_pwr)
   brake_dis=0;
   else
   {
-  delta_v=ptr_servo->ctl.cur_pwr-ptr_servo->ctl.stop_pwr;
-  brake_dis=delta_v*ptr_servo->ctl.deceleration_cnt/10000;
+  delta_pwr=ptr_servo->ctl.cur_pwr-ptr_servo->ctl.stop_pwr;
+  brake_dis=delta_pwr*ptr_servo->ctl.deceleration_cnt/100;
   }
-}
+  return brake_dis;
 }
 
-uint32_t servo_calculate_brake_pos(close_loop_servo_sys_t *ptr_servo,uint32_t brake_dis)
+static uint32_t servo_calculate_limit_brake_pos_(close_loop_servo_sys_t *ptr_servo,uint32_t brake_dis)
 {
   int8_t dir=1;
   uint32_t brake_pos;
   if(ptr_servo==NULL)
-    return;
+  APP_ERROR_HANDLER(APP_ERROR_NULL);
+  
   if(ptr_servo->motor.dir==NEGATIVE_DIR)//反转
     dir=-1;
   brake_pos=ptr_servo->encoder.cur+brake_dis*dir;  
   return brake_pos;
 }
 
-static void servo_set_stop_pos(close_loop_servo_sys_t *ptr_servo,uint32_t brake_pos)
+static void servo_calculate_stop_pos(close_loop_servo_sys_t *ptr_servo,uint32_t brake_pos)
 {
   int8_t dir=1;
   if(ptr_servo==NULL)
@@ -694,8 +684,90 @@ static void servo_calculate_acc_dec_pos(close_loop_servo_sys_t *ptr_servo)
   }
   APP_LOG_INFO("计算的加速停止点为：%d ;减速开始点为：%d.\r\n",ptr_servo->ctl.acceleration_stop,ptr_servo->ctl.deceleration_start);
 }
+#define  HORIZONTAL_ENCODER_RESOLUTION  400
 
+/*
+ 由循环位置计算连续位置
+*/
+static uint32_t manipulator_calculate_horizontal_pos(close_loop_servo_sys_t *ptr_servo,uint32_t rotary_pos)
+{
+  uint32_t base_pos,pre_pos,next_pos,brake_pos;
+  base_pos=ptr_servo->encoder.cur-(ptr_servo->encoder.cur%ptr_servo->encoder.resolution);
+  pre_pos=pos_tag+base_pos;
+  next_pos=pre_pos+ptr_servo->encoder.resolution;
+  brake_pos= servo_calculate_brake_pos(ptr_servo);
+  if(brake_pos > (pre_pos+next_pos)/2)
+  {
+   APP_LOG_INFO("水平伺服计算的目标点next_pos：%d.\r\n",next_pos); 
+   return next_pos;
+  }
+  APP_LOG_INFO("水平伺服计算的目标点pre_pos：%d.\r\n",pre_pos);
+  return pre_pos;
+}
 
+static uint8_t manipulator_get_pos(coordinate_t *ptr_coordinate,ctl_info_t *ptr_cmd,uint32_t *ptr_v,uint32_t *ptr_h)
+{
+   uint8_t v_tag,h_tag;
+   uint32_t h;
+   
+   if(ptr_coordinate==NULL||ptr_cmd==NULL||ptr_v==NULL||ptr_h==NULL)
+     return JUICE_FALSE;
+   
+   v_tag=ptr_cmd->param8[0]-1;
+   h_tag=ptr_cmd->param8[1]-1;
+   
+   if(ptr_cmd->type==MANIPULATOR_GOTO_CUP_TOP)
+   *ptr_v=ptr_coordinate->array[v_tag][h_tag].vertical.cup_top;  
+   else if(ptr_cmd->type==MANIPULATOR_GOTO_CUP_BOT)
+   *ptr_v=ptr_coordinate->array[v_tag][h_tag].vertical.cup_bot;  
+   else if(ptr_cmd->type==MANIPULATOR_LIFT_UP_CUP)
+   *ptr_v=ptr_coordinate->array[v_tag][h_tag].vertical.cup_lift_up;
+   else if(ptr_cmd->type==MANIPULATOR_GOTO_RESET)   
+   *ptr_v=ptr_coordinate->reset.vertical.sys;
+   else if(ptr_cmd->type==MANIPULATOR_GOTO_STANDBY)   
+   *ptr_v=ptr_coordinate->standby.vertical.sys;
+   else
+   {
+   APP_LOG_ERROR("错误！命令指针信息类型错误！ptr_cmd->type:%d\r\n",ptr_cmd->type);
+   return JUICE_FALSE;
+   }
+  /*重新计算水平位置*/
+   *ptr_h=manipulator_calculate_horizontal_pos(&ptr_manipulator->horizontal_servo,ptr_coordinate->array[v_tag][h_tag].horizontal);
+      
+   return JUICE_TRUE;
+}
+static uint8_t  manipulator_process_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+{
+  uint32_t vertical,horizontal,lb_dis,lb_pos;
+  
+  if(ptr_manipulator==NULL || ptr_cmd==NULL)
+    return JUICE_FALSE;  
+  if(coordinate_get_pos(&ptr_manipulator->juice_pos,ptr_cmd,&vertical,&horizontal)!=JUICE_TRUE)
+    return JUICE_FALSE; 
+  /*设置目标点*/
+  servo_set_tar_pos(&ptr_manipulator->vertical_servo,vertical);
+  servo_set_tar_pos(&ptr_manipulator->horizontal_servo,horizontal);
+  
+  /*计算垂直方向伺服系统当前速度下的极限刹车距离*/
+  lb_dis=servo_calculate_limit_brake_dis(&ptr_manipulator->vertical_servo);
+  /*计算垂直方向伺服当前速度下的极限刹车点*/
+  lb_pos=servo_calculate_limit_brake_pos_(&ptr_manipulator->vertical_servo,lb_dis);
+  /*计算垂直方向伺服当前速度下的停车点*/
+  servo_calculate_stop_pos(&ptr_manipulator->vertical_servo,lb_pos);
+  /*计算垂直方向伺服当前速度下的加速点和减速点*/
+  servo_calculate_acc_dec_pos(&ptr_manipulator->vertical_servo);
+  
+  /*计算水平方向伺服系统当前速度下的极限刹车距离*/
+  lb_dis=servo_calculate_limit_brake_dis(&ptr_manipulator->horizontal_servo);
+  /*计算水平方向伺服当前速度下的极限刹车点*/
+  lb_pos=servo_calculate_limit_brake_pos_(&ptr_manipulator->horizontal_servo,lb_dis);
+  /*计算水平方向伺服当前速度下的停车点*/
+  servo_calculate_stop_pos(&ptr_manipulator->horizontal_servo,lb_pos);
+  /*计算水平方向伺服当前速度下的加速点和减速点*/
+  servo_calculate_acc_dec_pos(&ptr_manipulator->horizontal_servo);
+ 
+  return JUICE_TRUE;
+}
 
 
 
@@ -714,12 +786,13 @@ float my_sqrt(float x)
 }
 */
 
-
 /*
 计算实时速度，速度比等于路程比--2次曲线加速减速
 */
 static uint8_t servo_calculate_real_time_velocity(close_loop_servo_sys_t *ptr_servo)
 {
+  uint32_t cur_pos=ptr_servo->encoder.cur;
+  
   int8_t pwr=ptr_servo->ctl.cur_pwr;
   int8_t dir=1;
   
@@ -728,16 +801,16 @@ static uint8_t servo_calculate_real_time_velocity(close_loop_servo_sys_t *ptr_se
   if(ptr_servo->motor.dir==NEGATIVE_DIR)
   dir=-1;
   
-  if(ptr_servo->encoder.cur*dir < ptr_servo->ctl.acceleration_stop*dir)
+  if(cur_pos*dir < ptr_servo->ctl.acceleration_stop*dir)
   {
-    pwr=(ptr_servo->encoder.cur-ptr_servo->ctl.start)*dir*100/ptr_servo->ctl.acceleration_cnt;
-    if(pwr<(int8_t)(-PULSES_CNT_EQUIVALENT_TOLERENCE*100/ptr_servo->ctl.acceleration_cnt))
+    pwr=(cur_pos-ptr_servo->ctl.start)*dir*100/ptr_servo->ctl.acceleration_cnt;
+    if(pwr<(int8_t)(ptr_servo->ctl.tolerance*(-100)/ptr_servo->ctl.acceleration_cnt))
     goto pos_err_handle;
   }
-  else if(ptr_servo->encoder.cur*dir >= ptr_servo->ctl.deceleration_start*dir)
+  else if(cur_pos*dir >= ptr_servo->ctl.deceleration_start*dir)
   {
-    pwr=(ptr_servo->ctl.stop-ptr_servo->encoder.cur)*dir*100/ptr_servo->ctl.deceleration_cnt; 
-    if(pwr<(int8_t)(-PULSES_CNT_EQUIVALENT_TOLERENCE*100/ptr_servo->ctl.deceleration_cnt))
+    pwr=(ptr_servo->ctl.stop-cur_pos)*dir*100/ptr_servo->ctl.deceleration_cnt; 
+    if(pwr<(int8_t)(ptr_servo->ctl.tolerance*(-100)/ptr_servo->ctl.deceleration_cnt))
     goto pos_err_handle;
   }
   if(pwr<0)/*应该忽略启动抖动*/
@@ -747,95 +820,21 @@ static uint8_t servo_calculate_real_time_velocity(close_loop_servo_sys_t *ptr_se
 err_handle:
   pwr=ptr_servo->ctl.cur_pwr;
   osMessagePut(pwr);
-  /*位置出现故障，需重新计算新的位置*/
+  /*位置出现故障，出现在start和stop点之外，需重新计算新的位置*/
   ctl_info_t cmd; 
-  cmd.type=SERVO_START;
-  cmd.param.param8[0]=ptr_servo->ctl.tar;
+  cmd.type=MANIPULATOR_ARRIVE;
+  cmd.param8[0]=ptr_servo->ctl.tar; 
+  osMessagePut(); 
   
-  osMessagePut();
+  return pwr;
 }
 
-
-#define  HORIZONTAL_ENCODER_RESOLUTION  400
-
-static uint32_t servo_calculate_horizontal_pos(uint32_t pos_tag)
+static void manipulator_process_arrive(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
 {
-  uint32_t base_pos,pre_pos,next_pos,brake_pos;
-  base_pos=horizontal_servo.encoder.cur-horizontal_servo.encoder.cur%HORIZONTAL_ENCODER_RESOLUTION;
-  pre_pos=pos_tag+base_pos;
-  next_pos=pre_pos+HORIZONTAL_ENCODER_RESOLUTION;
-  brake_pos= servo_calculate_brake_pos(&horizontal_servo);
-  if(brake_pos > (pre_pos+next_pos)/2)
-  {
-   APP_LOG_INFO("水平伺服计算的目标点next_pos：%d\r\n",next_pos); 
-   return next_pos;
-  }
-  APP_LOG_INFO("水平伺服计算的目标点pre_pos：%d\r\n",pre_pos);
-  return pre_pos;
-}
-
-static uint8_t servo_get_pos(ctl_info_t *ptr_cmd,uint32_t *ptr_v,uint32_t *ptr_h)
-{
-   uint8_t v_tag,h_tag;
-   if(ptr_cmd==NULL||ptr_v==NULL||ptr_h==NULL)
-     return JUICE_FALSE;
-   v_tag=cmd->param.param8[0]-1;
-   h_tag=cmd->param.param8[1]-1;
-
-   *ptr_v=juice_pos.coordinate[v_tag][h_tag].vertical;  
-   *ptr_h=juice_pos.coordinate[v_tag][h_tag].horizontal;
    
-   return JUICE_TRUE;
-}
-
-static void servo_process_error()
-
-
-static void manipulator_task(void const * argument)
-{
-  osEvent msg;
-  ctl_info_t cmd;
- //参数初始话
- APP_LOG_INFO("++++++机械滑台和旋转任务开始！\r\n"); 
- while(1)
- {
- msg=osMessageGet(slideway_msg_queue_hdl,osWaitForever);
- if(msg.status!=osEventMessage )
- continue;
- cmd=(ctl_info_t)msg.value.v;
- switch(cmd.type)
- {
- case SERVO_GOTO_COORDINATE:  
-   uint32_t vertical,horizontal;
-   servo_get_pos(&cmd,&vertical,&horizontal);  
-   APP_LOG_DEBUG("设置了新的目标点 垂直：%d 水平：%d \r\n",vertical_servo.ctl.tar,horizontal_servo.ctl.tar);
-   servo_set_pos(&vertical_servo,vertical);
-   servo_set_pos(&horizontal_servo,horizontal);
-   break;
- case SERVO_ERROR:
-   juice_set_fault_code(cmd.param.param8[1]);
-   APP_LOG_ERROR("故障电机类型：%d  故障码：%d \r\n",cmd.param.param8[0],cmd.param.param8[1]);
-   if(cmd.param.param8[0]==VERTICAL_SERVO_MOTOR)
-   {
-   vertical_servo.motor.active=JUICE_FALSE;
-   vertical_servo.ctl.active=JUICE_FALSE;
-   vertical_servo.ctl.cur_pwr=0;
-   BSP_pwr_dwn_vertical_motor();   
-   horizontal_servo.ctl.tar=horizontal_servo.ctl.stop;//水平电机正常停止转动
-   }
-   else if(cmd.param.param8[0]==HORIZONGTAL_SERVO_MOTOR)
-   {
-   horizontal_servo.motor.active=JUICE_FALSE;
-   horizontal_servo.ctl.active=JUICE_FALSE;
-   horizontal_servo.ctl.cur_pwr=0;
-   BSP_pwr_dwn_horizontal_motor(); 
-   vertical_servo.ctl.tar=vertical_servo.ctl.stop;//水平电机正常停止转动 
-   }
-   break;
- case SERVO_ARRIVE:
-  if(cmd.param.param8[0]== VERTICAL_SERVO_MOTOR)
+  if(ptr_cmd->param.param8[0]== VERTICAL_SERVO_MOTOR)
   {
-    if(vertical_servo.ctl.stop!=vertical_servo.ctl.tar)
+    if(ptr_manipulator->vertical_servo.ctl.stop!=ptr_manipulator->vertical_servo.ctl.tar)
     {
     vertical_servo.ctl.stop=vertical_servo.ctl.tar;
     APP_LOG_DEBUG("停止后，重新开始运动！\r\n");
@@ -863,23 +862,86 @@ static void manipulator_task(void const * argument)
     APP_LOG_DEBUG("垂直电机到达目标位置，当前值：%d\r\n",horizontal_servo.encoder.cur); 
     }
   }
-  break;
- case SERVO_GOTO_CUP_BOT:
-   servo_set_new_pos(uint32_t pos);
+}
+static void manipulator_process_error()
+{
+ 
+}
+
+
+static void manipulator_task(void const * argument)
+{
+  uint8_t ret;
+  osEvent msg;
+  ctl_info_t cmd;
+  uint32_t vertical,horizontal;
+ //参数初始话
+ APP_LOG_INFO("++++++机械滑台和旋转任务开始！\r\n"); 
+ while(1)
+ {
+ msg=osMessageGet(slideway_msg_queue_hdl,osWaitForever);
+ if(msg.status!=osEventMessage )
+ continue;
+ cmd=(ctl_info_t)msg.value.v;
+ switch(cmd.type)
+ {
+ case MANIPULATOR_GOTO_RESET:
+   APP_LOG_WANING("机械手收到复位位置命令.\r\n");
+ case MANIPULATOR_GOTO_STANDBY:
+   APP_LOG_WANING("机械手收到待机位置命令.\r\n");
+   goto manipulator_pos_process;
+ case MANIPULATOR_GOTO_SLOT:
+   APP_LOG_WANING("机械手收到榨汁口位置命令.\r\n");
+   goto manipulator_pos_process;
+ case MANIPULATOR_PUT_INTO_SLOT:
+   APP_LOG_WANING("机械手收到榨汁口底部位置命令.\r\n");
+   goto manipulator_pos_process;
+ case MANIPULATOR_GOTO_CUP_TOP:  
+   APP_LOG_WANING("机械手收到果杯上方位置命令.\r\n");
+   goto manipulator_pos_process;
+ case MANIPULATOR_GOTO_CUP_BOT:
+   APP_LOG_WANING("机械手收到果杯底部位置命令.\r\n");
+   goto manipulator_pos_process;
+ case MANIPULATOR_LIFT_UP_CUP:
+   APP_LOG_WANING("机械手收到果杯提升位置命令！\r\n");
+   goto manipulator_pos_process;
+ manipulator_pos_process:  
+   ret=manipulator_process_pos(&manipulator_servo,&cmd);  
+   if(ret!=JUICE_TRUE)
    break;
- case SERVO_LIFT_UP_CUP:
-  servo_set_new_pos(uint32_t pos);
+   APP_LOG_INFO("机械手设置了新的目标点 垂直：%d 水平：%d \r\n",manipulator_servo.vertical_servo.ctl.tar,manipulator.horizontal_servo.ctl.tar);
+   break;     
+ case MANIPULATOR_ARRIVE:
+   APP_LOG_INFO("机械手收到到达消息.\r\n");
+   manipulator_process_arrive(&manipulator_servo,&cmd);
    break;
- case SERVO_GOTO_SLOT:
-   servo_set_new_pos(uint32_t pos);
+ case MANIPULATOR_ERROR:
+   APP_LOG_ERROR("机械手收到出错消息.\r\n");
+   juice_set_fault_code(cmd.param8[1]);
+   APP_LOG_ERROR("故障电机类型：%d  故障码：%d \r\n",cmd.param.param8[0],cmd.param8[1]);
+   if(cmd.param.param8[0]==VERTICAL_SERVO_MOTOR)
+   {
+   vertical_servo.motor.active=JUICE_FALSE;
+   vertical_servo.ctl.active=JUICE_FALSE;
+   vertical_servo.ctl.cur_pwr=0;
+   BSP_pwr_dwn_vertical_motor();   
+   horizontal_servo.ctl.tar=horizontal_servo.ctl.stop;//水平电机正常停止转动
+   }
+   else if(cmd.param8[0]==HORIZONGTAL_SERVO_MOTOR)
+   {
+   horizontal_servo.motor.active=JUICE_FALSE;
+   horizontal_servo.ctl.active=JUICE_FALSE;
+   horizontal_servo.ctl.cur_pwr=0;
+   BSP_pwr_dwn_horizontal_motor(); 
+   vertical_servo.ctl.tar=vertical_servo.ctl.stop;//水平电机正常停止转动 
+   }
    break;
- case SERVO_PUT_CUP_INTO_SLOT:
-   vertical_servo_set_new_pos(uint32_t pos);
+
    break;
- case SERVO_PWR_UPDATE:
+ case MANIPULATOR_PWR_UPDATE:
    
    break;
- case SERVO_DEBUG:
+ case MANIPULATOR_STOP:
    {
    }
    break;

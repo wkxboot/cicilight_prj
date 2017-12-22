@@ -232,7 +232,16 @@ typedef struct
 
 typedef struct
 {
-  uint32_t vertical;
+  union 
+  {
+  uint32_t sys;
+  struct __cup
+  {
+  uint32_t cup_top;
+  uint32_t cup_lift_up;
+  uint32_t cup_bot;
+  };
+  }vertical;
   uint32_t horizontal;
 }point_t;//坐标点对应的计数值
 
@@ -241,17 +250,18 @@ typedef struct
 
 typedef struct
 {
-  point_t coordinate[VERTICAL_CNT][HORIZONTAL_CNT];
+  point_t array[VERTICAL_CNT][HORIZONTAL_CNT];
   point_t reset;
   point_t juicing;
   point_t standby;
-}matrix_t;
+}coordinate_t;
 
 typedef struct
 {
   volatile uint8_t dir;
   volatile uint16_t cur; 
-  int16_t overflow_cnt;
+  int16_t  overflow_cnt;
+  uint16_t resolution;
 }rotary_encoder_t;
 
 typedef struct 
@@ -262,8 +272,9 @@ typedef struct
   uint8_t stop_pwr;
   uint8_t pwr_step;//功率步进值 
   uint8_t max_pwr;//工作功率
+  uint16_t tolerance;//位置允许误差
   uint32_t max_pwr_value;
- 
+  
   uint32_t tar;
   uint32_t start;
   uint32_t stop;
@@ -284,17 +295,22 @@ typedef struct
  process_ctl_t    ctl;
 }close_loop_servo_sys_t;
 
-
-
+typedef struct
+{
+  close_loop_servo_sys_t vertical_servo;
+  close_loop_servo_sys_t horizontal_servo;
+  coordinate_t juice_pos;
+  uint8_t active;
+}manipulator_servo_t;
 
 typedef struct //任务内部消息结构
 {
   uint16_t type;
-  union 
+  union __param
   {
   uint16_t param16;
   uint8_t param8[2];
-  }param;
+  };
 }ctl_info_t;
 
 #endif
