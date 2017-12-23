@@ -726,12 +726,12 @@ static uint8_t manipulator_get_cup_bot_pos(manipulator_servo_t *ptr_manipulator,
   APP_ASSERT(ptr_v);
   APP_ASSERT(ptr_h); 
   get_pos_tag_from_ctl_info(ptr_cmd,&v_tag,&h_tag); 
-    /*重新计算水平位置*/
+  /*重新计算水平位置*/
   *ptr_h=manipulator_calculate_horizontal_pos(ptr_manipulator,ptr_manipulator->juice_pos.array[v_tag][h_tag].horizontal);
   *ptr_v=ptr_manipulator->juice_pos.array[v_tag][h_tag].vertical.cup_bot;
- return JUICE_TRUE;
+  return JUICE_TRUE;
 }
-static uint8_t manipulator_get_lift_up_cup_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd,uint32_t *ptr_v,uint32_t *ptr_h)
+static uint8_t manipulator_get_cup_lift_up_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd,uint32_t *ptr_v,uint32_t *ptr_h)
 {
   uint8_t v_tag,h_tag;
   APP_ASSERT(ptr_manipulator);
@@ -739,10 +739,10 @@ static uint8_t manipulator_get_lift_up_cup_pos(manipulator_servo_t *ptr_manipula
   APP_ASSERT(ptr_v);
   APP_ASSERT(ptr_h); 
   get_pos_tag_from_ctl_info(ptr_cmd,&v_tag,&h_tag); 
-    /*重新计算水平位置*/
+  /*重新计算水平位置*/
   *ptr_h=manipulator_calculate_horizontal_pos(ptr_manipulator,ptr_manipulator->juice_pos.array[v_tag][h_tag].horizontal);
   *ptr_v=ptr_manipulator->juice_pos.array[v_tag][h_tag].vertical.cup_lift_up;
- return JUICE_TRUE;
+  return JUICE_TRUE;
 }
 
 static uint8_t manipulator_get_juicing_pos(manipulator_servo_t *ptr_manipulator,uint32_t *ptr_v,uint32_t *ptr_h)
@@ -750,66 +750,331 @@ static uint8_t manipulator_get_juicing_pos(manipulator_servo_t *ptr_manipulator,
   APP_ASSERT(ptr_manipulator);
   APP_ASSERT(ptr_v);
   APP_ASSERT(ptr_h); 
-  /*重新计算水平位置*/
-  *ptr_h=manipulator_calculate_horizontal_pos(ptr_manipulator,ptr_manipulator->juice_pos.juicing.horizontal);
+  *ptr_h=ptr_manipulator->juice_pos.juicing.horizontal);
   *ptr_v=ptr_manipulator->juice_pos.juicing.vertical.sys;
- return JUICE_TRUE;
+  return JUICE_TRUE;
 }
+static uint8_t manipulator_get_slot_pos(manipulator_servo_t *ptr_manipulator,uint32_t *ptr_v,uint32_t *ptr_h)
+{
+  APP_ASSERT(ptr_manipulator);
+  APP_ASSERT(ptr_v);
+  APP_ASSERT(ptr_h); 
+  *ptr_h=ptr_manipulator->juice_pos.slot.horizontal);
+  *ptr_v=ptr_manipulator->juice_pos.slot.vertical.sys;
+  return JUICE_TRUE;
+}
+
 static uint8_t manipulator_get_standby_pos(manipulator_servo_t *ptr_manipulator,uint32_t *ptr_v,uint32_t *ptr_h)
 {
   APP_ASSERT(ptr_manipulator);
   APP_ASSERT(ptr_v);
   APP_ASSERT(ptr_h); 
-   /*重新计算水平位置*/
-  *ptr_h=manipulator_calculate_horizontal_pos(ptr_manipulator,ptr_manipulator->juice_pos.standby.horizontal);
+  *ptr_h=ptr_manipulator->juice_pos.standby.horizontal);
   *ptr_v=ptr_manipulator->juice_pos.standby.vertical.sys;
- return JUICE_TRUE;
+  return JUICE_TRUE;
 }
 
-
-
-
-static uint8_t servo_process_pos(close_loop_servo_t *ptr_servo,uint32_t pos)
+static uint8_t servo_calculate_process_ctl_pos(close_loop_servo_t *ptr_servo)
 {
-  uint32 lb_dis,lb_pos;
-  
-  if(ptr_servo==NULL)
-  return JUICE_FALSE;
-  
-  /*设置伺服系统目标点*/
-  servo_set_tar_pos(ptr_servo,pos);
-  /*计算伺服系统当前速度下的极限刹车距离*/
-  lb_dis=servo_calculate_limit_brake_dis(ptr_servo);
+  uint32 lb_pos;
+  APP_ASSERT(ptr_servo);
   /*计算伺服当前速度下的极限刹车点*/
-  lb_pos=servo_calculate_limit_brake_pos(ptr_servo,lb_dis);
-  /*计算伺服当前速度下的停车点*/
+  lb_pos=servo_calculate_limit_brake_pos(ptr_servo);
+  /*计算伺服当前速度下的实际停车点*/
   servo_calculate_stop_pos(ptr_servo,lb_pos);
   /*计算伺服当前速度下的加速点和减速点*/
-  servo_calculate_acc_dec_pos(ptr_servo); 
-  
+  servo_calculate_acc_dec_pos(ptr_servo);  
+}
+static uint8_t servo_process_tar_pos(close_loop_servo_t *ptr_servo,uint32_t pos)
+{  
+  APP_ASSERT(ptr_servo);
+  /*设置伺服系统目标点*/
+  servo_set_tar_pos(ptr_servo,pos);
+  servo_calculate_process_ctl_pos(ptr_servo);
   return JUICE_TRUE; 
 }
 
 
 
-static uint8_t  manipulator_process_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
-{
-  uint32_t vertical,horizontal;
-  
-  if(ptr_manipulator==NULL || ptr_cmd==NULL)
-    return JUICE_FALSE;  
-  if(coordinate_get_pos(&ptr_manipulator->juice_pos,ptr_cmd,&vertical,&horizontal)!=JUICE_TRUE)
-    return JUICE_FALSE; 
+static uint8_t  manipulator_process_tar_pos(manipulator_servo_t *ptr_manipulator,uint32_t vertical,uint32_t horizontal)
+{ 
+  APP_ASSERT(ptr_manipulator);
+  APP_ASSERT(ptr_cmd); 
   /*处理垂直方向伺服系统参数*/
-  servo_process_pos(&ptr_manipulator->vertical_servo,vertical);
+  servo_process_tar_pos(&ptr_manipulator->vertical_servo,vertical);
   /*处理水平方向伺服系统参数*/
-  servo_process_pos(&ptr_manipulator->horizontal_servo,horizontal);
-  
+  servo_process_tar_pos(&ptr_manipulator->horizontal_servo,horizontal); 
   return JUICE_TRUE;
 }
 
 
 
+static uint8_t manipulator_process_cup_top_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+{
+  uint32_t vertical,horizontal;
+  manipulator_get_cup_top_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
+  manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+  return JUICE_TRUE;
+}
+static uint8_t manipulator_process_cup_bot_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+{
+  uint32_t vertical,horizontal;
+  manipulator_get_cup_bot_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
+  manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+  return JUICE_TRUE;
+}
+static uint8_t manipulator_process_lift_up_cup_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+{
+  uint32_t vertical,horizontal;
+  manipulator_get_cup_lift_up_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
+  manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+  return JUICE_TRUE;
+}
+
+
+static uint8_t manipulator_process_standby_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+{
+  uint32_t vertical,horizontal;
+  manipulator_get_standby_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
+  manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+  return JUICE_TRUE;
+}
+static uint8_t manipulator_process_juicing_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+{
+  uint32_t vertical,horizontal;
+  manipulator_get_juicing_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
+  manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+  return JUICE_TRUE;
+}
+static uint8_t manipulator_process_slot_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+{
+  uint32_t vertical,horizontal;
+  manipulator_get_juicing_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
+  manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+  return JUICE_TRUE;
+}
+static uint8_t manipulator_process_reset_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+{
+  uint32_t vertical,horizontal;
+  manipulator_get_reset_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
+  manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+  return JUICE_TRUE;
+}
+
+
+/*
+ 同步起始点和当前位置点，由于位置错误或者到达stop点。
+*/
+static uint8_t servo_sync_start_cur_pos(close_loop_servo_t *ptr_servo)
+{
+ uint32_t cur_pos;
+ APP_ASSERT(ptr_servo);
+ cur_pos=servo_get_cur_pos(ptr_servo);
+ servo_set_start_pos(ptr_servo,cur_pos); 
+ servo_calculate_process_ctl_pos(ptr_servo);
+ return JUICE_TRUE;
+}
+
+
+
+static uint8_t get_servo_tag_from_ctl_info(ctl_info_t *ptr_cmd)
+{
+ APP_ASSERT(ptr_cmd);
+ return ptr_cmd->param8[0];
+}
+
+static uint8_t is_servo_finished(close_loop_servo_t *ptr_servo)
+{
+APP_ASSERT(ptr_servo);
+if(ptr_servo->ctl.stop==ptr_servo->ctl.tar) 
+return JUICE_TRUE;
+
+return JUICE_FALSE;
+}
+static uint32_t servo_get_cur_pos(close_loop_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo);
+ return ptr_servo->encoder.cur;  
+}
+static uint32_t servo_get_tar_pos(close_loop_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo);
+ return ptr_servo->ctl.tar; 
+}
+ static uint8_t manipulator_get_cur_pos(manipulator_servo_t *ptr_manipulator,uint32_t *ptr_v,uint32_t *ptr_h)
+{
+ APP_ASSERT(ptr_manipulator);  
+ *ptr_v=servo_get_cur_pos(&ptr_manipulator->vertical_servo);
+ *ptr_h=servo_get_cur_pos(&ptr_manipulator->horizontal_servo);
+ return JUICE_TRUE;
+}
+static uint8_t manipulator_get_tar_pos(manipulator_servo_t *ptr_manipulator,uint32_t *ptr_v,uint32_t *ptr_h)
+{
+ APP_ASSERT(ptr_manipulator);  
+ *ptr_v=servo_get_tar_pos(&ptr_manipulator->vertical_servo);
+ *ptr_h=servo_get_tar_pos(&ptr_manipulator->horizontal_servo);
+ return JUICE_TRUE;
+}
+static uint8_t servo_set_start_pos(close_loop_servo_t *ptr_servo,uint32_t pos)
+{
+ APP_ASSERT(ptr_servo);
+ ptr_servo->ctl.start=pos; 
+ return JUICE_TRUE;
+}
+
+
+static void servo_pwr_dwn(close_loop_servo_t *ptr_servo)
+{
+  APP_ASSERT(ptr_servo);
+  ptr_servo->motor.driver.pwr_dwn();
+  ptr_servo->motor.dir=NULL_DIR;
+}
+static void servo_pwr_on_positive(close_loop_servo_t *ptr_servo)
+{
+  APP_ASSERT(ptr_servo);
+  ptr_servo->motor.driver.pwr_on_positive();
+  ptr_servo->motor.dir=POSITIVE_DIR;
+}
+static void servo_pwr_on_negative(close_loop_servo_t *ptr_servo)
+{
+  APP_ASSERT(ptr_servo);
+  ptr_servo->motor.driver.pwr_on_negative();
+  ptr_servo->motor.dir=NEGATIVE_DIR;
+  ptr_servo->motor.active=JUICE_FALSE;
+}
+static uint8_t servo_set_active_value(close_loop_servo_t *ptr_servo,uint8_t value)
+{
+ APP_ASSERT(ptr_servo); 
+ ptr_servo->ctl.active=value;
+ return JUICE_TRUE;
+}
+static uint8_t servo_get_active_value(close_loop_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo); 
+ return ptr_servo->ctl.active;
+}
+static uint8_t motor_set_active_value(motor_t *ptr_motor,uint8_t value)
+{
+ APP_ASSERT(ptr_motor); 
+ ptr_motor->active=value;
+ return JUICE_TRUE; 
+}
+static uint8_t motor_get_active_value(motor_t *ptr_motor)
+{
+ APP_ASSERT(ptr_motor); 
+ return ptr_motor->active;
+}
+
+static uint8_t is_manipulator_finished(manipulator_servo_t *ptr_manipulator)
+{
+ APP_ASSERT(ptr_manipulator); 
+ if(servo_get_active_value(&ptr_manipulator->vertical_servo)==JUICE_TRUE && \
+    servo_get_active_value(&ptr_manipulator->horizontal_servo)==JUICE_TRUE  )
+ return JUICE_TRUE;
+ 
+ return JUICE_FALSE;
+}
+static uint8_t  manipulator_process_arrive(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+{
+  uint8_t servo_tag;
+  uint32_t cur_pos;
+  close_loop_servo_t *ptr_servo=NULL;
+  APP_ASSERT(ptr_manipulator);
+  APP_ASSERT(ptr_cmd);
+  servo_tag=get_servo_tag_from_ctl_info(ptr_cmd);
+  if(servo_tag == VERTICAL_SERVO)
+  {
+  ptr_servo=&ptr_manipulator->vertical_servo;
+  APP_LOG_INFO("垂直方向伺服到达.\r\n");
+  }
+  else if(servo_tag == HORIZONTAL_SERVO)
+  {
+  ptr_servo=&ptr_manipulator->horizontal_servo;
+  APP_LOG_INFO("水平方向伺服到达.\r\n");
+  }
+  APP_ASSERT(ptr_servo); 
+  if(is_servo_finished(ptr_servo)==JUICE_TRUE)
+  {
+   servo_set_active_value(ptr_servo,JUICE_TRUE);//本方向到达
+   APP_LOG_INFO("本方向伺服结束.\r\n");  
+   if(is_manipulator_finished(ptr_manipulator)==JUICE_TRUE)
+   {
+   APP_LOG_INFO("所有方向伺服结束.\r\n");
+   /*向榨汁任务发送消息到达指定位置*/
+   osMessagePut(queue);
+   }
+  }
+  else
+  {
+   APP_LOG_INFO("伺服未结束，重新开始.\r\n");
+   /*发送位置同步消息*/
+   osMessagePut(queue);    
+  }
+  return JUCIE_TRUE;  
+}
+
+static uint8_t servo_sync_tar_limit_brake_pos(close_loop_servo_t *ptr_servo)
+{
+ uint32_t lb_pos;
+ APP_ASSERT(ptr_servo);  
+ lb_pos=servo_calculate_limit_brake_pos(ptr_servo);
+ /*把极限刹车点当做目标点*/
+ servo_process_tar_pos(ptr_servo,lb_pos);
+ return JUICE_TRUE;
+}
+static uint8_t get_fault_code_from_ctl_info(ctl_info_t *ptr_cmd)
+{
+ APP_ASSERT(ptr_cmd); 
+ return ptr_cmd->param8[1];
+}
+static uint8_t manipulator_process_error(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+{
+  uint8_t fault_code;
+  uint8_t servo_tag;
+  close_loop_servo_t *ptr_servo_err=NULL;
+  close_loop_servo_t *ptr_servo_ok=NULL;
+  APP_ASSERT(ptr_manipulator);
+  APP_ASSERT(ptr_cmd);
+  fault_code=get_fault_code_from_ctl_info(ptr_cmd);
+  servo_tag=get_servo_tag_from_ctl_info(ptr_cmd);
+  juice_set_fault_code(fault_code);
+  APP_LOG_ERROR("故障电机类型：%d  故障码：%d \r\n",servo_tag,fault_code);
+  /*向榨汁任务发送到达错误消息*/
+  osMessagePut(queue_err);
+  
+  if(servo_tag == VERTICAL_SERVO)
+  {
+  ptr_servo_err=&ptr_manipulator->vertical_servo;
+  ptr_servo_ok =&ptr_manipulator->horizontal_servo;
+  }
+  else if(servo_tag == HORIZONTAL_SERVO)
+  {
+  ptr_servo_err=&ptr_manipulator->horizontal_servo; 
+  ptr_servo_ok=&ptr_manipulator->vertical_servo; 
+  }
+  APP_ASSERT(ptr_servo_err);
+  APP_ASSERT(ptr_servo_ok);
+  /*出错的伺服马达立即无效*/
+  motor_set_active_value(&ptr_servo_err->motor,JUICE_FALSE);
+  /*没有出错的伺服立即刹车*/
+  servo_sync_tar_limit_brake_pos(ptr_servo_ok); 
+  return JUCIE_TRUE;
+}
+static uint8_t manipulator_sync_tar_limit_brake_pos(manipulator_servo_t *ptr_manipulator)
+{
+ APP_ASSERT(ptr_manipulator); 
+ servo_sync_tar_limit_brake_pos(&ptr_manipulator->vertical_servo); 
+ servo_sync_tar_limit_brake_pos(&ptr_manipulator->horizontal_servo);
+return JUICE_TRUE; 
+}
+
+static uint8_t manipulator_process_stop(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+{
+  APP_ASSERT(ptr_manipulator);
+  APP_ASSERT(ptr_cmd);
+  manipulator_sync_tar_limit_brake_pos(ptr_manipulator);
+  return JUICE_TRUE;
+}
 #define  PULSES_CNT_EQUIVALENT_TOLERENCE    5
 #define  IS_EQUIVALENT(a,b)  ((a>=b?a-b:b-a)<=PULSES_CNT_EQUIVALENT_TOLERENCE)
 /*
@@ -868,45 +1133,6 @@ err_handle:
   return pwr;
 }
 
-static void manipulator_process_arrive(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
-{
-   
-  if(ptr_cmd->param.param8[0]== VERTICAL_SERVO_MOTOR)
-  {
-    if(ptr_manipulator->vertical_servo.ctl.stop!=ptr_manipulator->vertical_servo.ctl.tar)
-    {
-    vertical_servo.ctl.stop=vertical_servo.ctl.tar;
-    APP_LOG_DEBUG("停止后，重新开始运动！\r\n");
-    }
-    else
-    {
-    BSP_pwr_dwn_vertical_motor(); 
-    vertical_servo.ctl.cur_pwr=0;
-    vertical_servo.motor.dir=NULL_DIR;
-    APP_LOG_DEBUG("垂直电机到达目标位置，当前值：%d\r\n",vertical_servo.encoder.cur); 
-    }  
-  }
-  else if(cmd.param.param8[0]== HORIZONTAL_SERVO_MOTOR)
-  {
-    if(horizontal_servo.ctl.stop!=horizontal_servo.ctl.tar)
-    {
-    vertical_servo.ctl.stop=vertical_servo.ctl.tar;
-    APP_LOG_DEBUG("停止后，重新开始运动！\r\n"); 
-    }
-    else
-    {
-    BSP_pwr_dwn_horizontal_motor(); 
-    horizontal_servo.ctl.cur_pwr=0;
-    horizontal_servo.motor.dir=NULL_DIR;
-    APP_LOG_DEBUG("垂直电机到达目标位置，当前值：%d\r\n",horizontal_servo.encoder.cur); 
-    }
-  }
-}
-static void manipulator_process_error()
-{
- 
-}
-
 
 static void manipulator_task(void const * argument)
 {
@@ -926,26 +1152,33 @@ static void manipulator_task(void const * argument)
  {
  case MANIPULATOR_GOTO_RESET:
    APP_LOG_WANING("机械手收到复位位置命令.\r\n");
+   ret=manipulator_process_reset_pos(&manipulator_servo,&cmd);  
+   break;
  case MANIPULATOR_GOTO_STANDBY:
    APP_LOG_WANING("机械手收到待机位置命令.\r\n");
-   goto manipulator_pos_process;
- case MANIPULATOR_GOTO_SLOT:
+   ret=manipulator_process_standby_pos(&manipulator_servo,&cmd);  
+   break;
+ case MANIPULATOR_GOTO_JUICEING:
    APP_LOG_WANING("机械手收到榨汁口位置命令.\r\n");
-   goto manipulator_pos_process;
+   ret=manipulator_process_juicing_pos(&manipulator_servo,&cmd);  
+   break;
  case MANIPULATOR_PUT_INTO_SLOT:
    APP_LOG_WANING("机械手收到榨汁口底部位置命令.\r\n");
-   goto manipulator_pos_process;
+   ret=manipulator_process_slot_pos(&manipulator_servo,&cmd); 
+   break;
  case MANIPULATOR_GOTO_CUP_TOP:  
    APP_LOG_WANING("机械手收到果杯上方位置命令.\r\n");
-   goto manipulator_pos_process;
+   ret=manipulator_process_cup_top_pos(&manipulator_servo,&cmd); 
+   break;
  case MANIPULATOR_GOTO_CUP_BOT:
    APP_LOG_WANING("机械手收到果杯底部位置命令.\r\n");
-   goto manipulator_pos_process;
+   ret=manipulator_process_cup_bot_pos(&manipulator_servo,&cmd); 
+   break;
  case MANIPULATOR_LIFT_UP_CUP:
    APP_LOG_WANING("机械手收到果杯提升位置命令！\r\n");
-   goto manipulator_pos_process;
- manipulator_pos_process:  
-   ret=manipulator_process_pos(&manipulator_servo,&cmd);  
+   ret=manipulator_process_lift_up_cup_pos(&manipulator_servo,&cmd); 
+   break;
+
    if(ret!=JUICE_TRUE)
    break;
    APP_LOG_INFO("机械手设置了新的目标点 垂直：%d 水平：%d \r\n",manipulator_servo.vertical_servo.ctl.tar,manipulator.horizontal_servo.ctl.tar);
@@ -956,39 +1189,15 @@ static void manipulator_task(void const * argument)
    break;
  case MANIPULATOR_ERROR:
    APP_LOG_ERROR("机械手收到出错消息.\r\n");
-   juice_set_fault_code(cmd.param8[1]);
-   APP_LOG_ERROR("故障电机类型：%d  故障码：%d \r\n",cmd.param.param8[0],cmd.param8[1]);
-   if(cmd.param.param8[0]==VERTICAL_SERVO_MOTOR)
-   {
-   vertical_servo.motor.active=JUICE_FALSE;
-   vertical_servo.ctl.active=JUICE_FALSE;
-   vertical_servo.ctl.cur_pwr=0;
-   BSP_pwr_dwn_vertical_motor();   
-   horizontal_servo.ctl.tar=horizontal_servo.ctl.stop;//水平电机正常停止转动
-   }
-   else if(cmd.param8[0]==HORIZONGTAL_SERVO_MOTOR)
-   {
-   horizontal_servo.motor.active=JUICE_FALSE;
-   horizontal_servo.ctl.active=JUICE_FALSE;
-   horizontal_servo.ctl.cur_pwr=0;
-   BSP_pwr_dwn_horizontal_motor(); 
-   vertical_servo.ctl.tar=vertical_servo.ctl.stop;//水平电机正常停止转动 
-   }
-   break;
-
-   break;
- case MANIPULATOR_PWR_UPDATE:
-   
+   manipulator_process_error(&manipulator_servo,&cmd);
    break;
  case MANIPULATOR_STOP:
-   {
-   }
+   APP_LOG_ERROR("机械手收到停止消息.\r\n");
+   manipulator_process_stop(&manipulator_servo,&cmd);
    break;
  default:
    APP_LOG_WARNING("机械手任务传递了错误参数！\r\n");
- }
-
-                   
+ }                  
 }
 }
 

@@ -197,12 +197,30 @@
 
 typedef struct
 {
+  union 
+  {
+  void (*pwr_on)(void);
+  struct
+  {
+  void (*pwr_on_positive)(void);
+  void (*pwr_on_negative)(void);
+  };
+  };
+  void (*pwr_value)(uint32_t value);
+  void (*pwr_dwn)(void);
+  void (*enble)(void);
+  void (*disable)(void);
+}driver_t;
+
+typedef struct
+{
  uint8_t active;
  uint8_t dir;
  uint8_t cur_tag;//位置标号，与具体计数单位无关0-255
  uint8_t tar_tag;//位置标号，与具体计数单位无关0-255
  uint32_t run_time;
-}motor_state_t;//电机状态
+ driver_t driver;
+}motor_t;//电机状态
 
 
 typedef struct 
@@ -253,6 +271,7 @@ typedef struct
   point_t array[VERTICAL_CNT][HORIZONTAL_CNT];
   point_t reset;
   point_t juicing;
+  point_t slot;
   point_t standby;
 }coordinate_t;
 
@@ -290,15 +309,15 @@ typedef struct
 {
  uint8_t          active;
  uint32_t         run_time;
- motor_state_t    motor;
+ motor_t    motor;
  rotary_encoder_t encoder;
  process_ctl_t    ctl;
-}close_loop_servo_sys_t;
+}close_loop_servo_t;
 
 typedef struct
 {
-  close_loop_servo_sys_t vertical_servo;
-  close_loop_servo_sys_t horizontal_servo;
+  close_loop_servo_t vertical_servo;
+  close_loop_servo_t horizontal_servo;
   coordinate_t juice_pos;
   uint8_t active;
 }manipulator_servo_t;
