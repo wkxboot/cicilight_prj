@@ -785,7 +785,7 @@ static uint8_t servo_calculate_process_ctl_pos(close_loop_servo_t *ptr_servo)
   /*计算伺服当前速度下的加速点和减速点*/
   servo_calculate_acc_dec_pos(ptr_servo);  
 }
-static uint8_t servo_process_tar_pos(close_loop_servo_t *ptr_servo,uint32_t pos)
+static uint8_t servo_start(close_loop_servo_t *ptr_servo,uint32_t pos)
 {  
   APP_ASSERT(ptr_servo);
   /*设置伺服系统目标点*/
@@ -796,14 +796,14 @@ static uint8_t servo_process_tar_pos(close_loop_servo_t *ptr_servo,uint32_t pos)
 
 
 
-static uint8_t  manipulator_process_tar_pos(manipulator_servo_t *ptr_manipulator,uint32_t vertical,uint32_t horizontal)
+static uint8_t  manipulator_start(manipulator_servo_t *ptr_manipulator,uint32_t vertical,uint32_t horizontal)
 { 
   APP_ASSERT(ptr_manipulator);
   APP_ASSERT(ptr_cmd); 
   /*处理垂直方向伺服系统参数*/
-  servo_process_tar_pos(&ptr_manipulator->vertical_servo,vertical);
+  servo_start(&ptr_manipulator->vertical_servo,vertical);
   /*处理水平方向伺服系统参数*/
-  servo_process_tar_pos(&ptr_manipulator->horizontal_servo,horizontal); 
+  servo_start(&ptr_manipulator->horizontal_servo,horizontal); 
   return JUICE_TRUE;
 }
 
@@ -813,21 +813,21 @@ static uint8_t manipulator_process_cup_top_pos(manipulator_servo_t *ptr_manipula
 {
   uint32_t vertical,horizontal;
   manipulator_get_cup_top_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
-  manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+  manipulator_start(ptr_manipulator,vertical,horizontal);
   return JUICE_TRUE;
 }
 static uint8_t manipulator_process_cup_bot_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
 {
   uint32_t vertical,horizontal;
   manipulator_get_cup_bot_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
-  manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+  manipulator_start(ptr_manipulator,vertical,horizontal);
   return JUICE_TRUE;
 }
 static uint8_t manipulator_process_lift_up_cup_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
 {
   uint32_t vertical,horizontal;
   manipulator_get_cup_lift_up_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
-  manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+  manipulator_start(ptr_manipulator,vertical,horizontal);
   return JUICE_TRUE;
 }
 
@@ -836,37 +836,42 @@ static uint8_t manipulator_process_standby_pos(manipulator_servo_t *ptr_manipula
 {
   uint32_t vertical,horizontal;
   manipulator_get_standby_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
-  manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+  manipulator_start(ptr_manipulator,vertical,horizontal);
   return JUICE_TRUE;
 }
 static uint8_t manipulator_process_juicing_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
 {
   uint32_t vertical,horizontal;
   manipulator_get_juicing_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
-  manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+  manipulator_start(ptr_manipulator,vertical,horizontal);
   return JUICE_TRUE;
 }
 static uint8_t manipulator_process_slot_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
 {
   uint32_t vertical,horizontal;
   manipulator_get_juicing_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
-  manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+  manipulator_start(ptr_manipulator,vertical,horizontal);
   return JUICE_TRUE;
 }
-static uint8_t manipulator_process_reset_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+static uint8_t manipulator_process_reset_pos(manipulator_t *ptr_manipulator,ctl_info_t *ptr_cmd)
 {
   uint32_t vertical,horizontal;
+  /*无效相关标志*/
+  manipulator_inactive(ptr_manipulator);
+  servo_inactive(&ptr_manipulator->vertical_servo);
+  servo_inactive(&ptr_manipulator->horizontal_servo);
+  
   manipulator_get_reset_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
-  manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+  manipulator_start(ptr_manipulator,vertical,horizontal);
 
   return JUICE_TRUE;
 }
 
 
 /*
- 同步起始点和当前位置点，由于位置错误或者到达stop点。
+ 重新开始。同步起始点和当前位置点，由于位置错误或者到达stop点。
 */
-static uint8_t servo_sync_start_cur_pos(close_loop_servo_t *ptr_servo)
+static uint8_t servo_restart(close_loop_servo_t *ptr_servo)
 {
  uint32_t cur_pos;
  APP_ASSERT(ptr_servo);
@@ -928,7 +933,7 @@ static void servo_pwr_on_positive(close_loop_servo_t *ptr_servo)
   ptr_servo->motor.driver.pwr_on_positive();
   ptr_servo->motor.dir=POSITIVE_DIR;
 }
-static void servo_pwr_on_negative(close_loop_servo_t *ptr_servo)
+static void servo_pwr_on_negative(manipulator_servo_t *ptr_servo)
 {
   APP_ASSERT(ptr_servo);
   ptr_servo->motor.driver.pwr_on_negative();
@@ -1071,7 +1076,7 @@ static uint8_t  manipulator_process_arrive(manipulator_t *ptr_manipulator,ctl_in
   else
   {
   APP_LOG_INFO("水平方向伺服临时到达，准备再次启动.\r\n");
-  servo_sync_start_cur_pos(&ptr_manipulator->vertical_servo);  
+  servo_start(&ptr_manipulator->vertical_servo);  
   }
   }
   if(is_manipulator_arrived(ptr_manipulator))
@@ -1083,7 +1088,8 @@ static uint8_t  manipulator_process_arrive(manipulator_t *ptr_manipulator,ctl_in
   return JUCIE_TRUE;  
 }
 
-static uint8_t servo_sync_tar_limit_brake_pos(close_loop_servo_t *ptr_servo)
+/*开始刹车*/
+static uint8_t servo_start_brake(close_loop_servo_t *ptr_servo)
 {
  uint32_t lb_pos;
  APP_ASSERT(ptr_servo);  
@@ -1097,7 +1103,39 @@ static uint8_t get_fault_code_from_ctl_info(ctl_info_t *ptr_cmd)
  APP_ASSERT(ptr_cmd); 
  return ptr_cmd->param8[1];
 }
-static uint8_t manipulator_process_error(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+
+static uint8_t manipulator_process_arrive_reset(manipulator_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+{
+  uint8_t servo_tag;
+  uint32_t cur_pos;
+  APP_ASSERT(ptr_manipulator);
+  APP_ASSERT(ptr_cmd);
+  servo_tag=get_servo_tag_from_ctl_info(ptr_cmd);
+  if(servo_tag == VERTICAL_SERVO)
+  {
+  APP_LOG_WARNING("垂直方向到达复位点.\r\n");
+  servo_active(&ptr_manipulator->vertical_servo);
+  }
+  else if(servo_tag == HORIZONTAL_SERVO)
+  {
+  APP_LOG_WARNING("水平方向到达复位点.\r\n");
+  servo_active(&ptr_manipulator->horizontal_servo); 
+  }
+  if(is_servo_active(&ptr_manipulator->vertical_servo)==JUICE_TRUE && \
+     is_servo_active(&ptr_manipulator->horizontal_servo)==JUICE_TRUE)
+  {
+   APP_LOG_WARNING("所有方向到达复位点.向榨汁任务发送到达复位点消息.\r\n");
+   manipulator_active(ptr_manipulator);
+   /*水平方向开始刹车*/
+   APP_LOG_WARNING("水平方向开始刹车.\r\n");
+   servo_start_brake(&ptr_manipulator->horizontal_servo);
+   osMessagePut(reset_ok);
+  }
+  
+  return JUICE_TRUE;  
+}
+
+static uint8_t manipulator_process_error(manipulator_t *ptr_manipulator,ctl_info_t *ptr_cmd)
 {
   uint8_t fault_code;
   uint8_t servo_tag;
@@ -1109,8 +1147,6 @@ static uint8_t manipulator_process_error(manipulator_servo_t *ptr_manipulator,ct
   servo_tag=get_servo_tag_from_ctl_info(ptr_cmd);
   juice_set_fault_code(fault_code);
   APP_LOG_ERROR("故障电机类型：%d  故障码：%d \r\n",servo_tag,fault_code);
-  /*向榨汁任务发送到达错误消息*/
-  osMessagePut(queue_err);
   
   if(servo_tag == VERTICAL_SERVO)
   {
@@ -1127,10 +1163,13 @@ static uint8_t manipulator_process_error(manipulator_servo_t *ptr_manipulator,ct
   /*出错的伺服马达立即无效*/
   motor_inactive(&ptr_servo_err->motor);
   /*没有出错的伺服立即刹车*/
-  servo_sync_tar_limit_brake_pos(ptr_servo_ok); 
+  servo_start_brake(ptr_servo_ok); 
+  /*向榨汁任务发送到达错误消息*/
+  osMessagePut(queue_err);
   return JUCIE_TRUE;
 }
-static uint8_t manipulator_sync_tar_limit_brake_pos(manipulator_servo_t *ptr_manipulator)
+/*机械手开始刹车*/
+static uint8_t manipulator_start_brake(manipulator_servo_t *ptr_manipulator)
 {
  APP_ASSERT(ptr_manipulator); 
  servo_sync_tar_limit_brake_pos(&ptr_manipulator->vertical_servo); 
@@ -1142,7 +1181,7 @@ static uint8_t manipulator_process_stop(manipulator_servo_t *ptr_manipulator,ctl
 {
   APP_ASSERT(ptr_manipulator);
   APP_ASSERT(ptr_cmd);
-  manipulator_sync_tar_limit_brake_pos(ptr_manipulator);
+  manipulator_start_brake(ptr_manipulator);
   return JUICE_TRUE;
 }
 #define  PULSES_CNT_EQUIVALENT_TOLERENCE    5
@@ -1159,68 +1198,6 @@ float my_sqrt(float x)
  return 1/x;  
 }
 */
-
-/*
-计算实时速度，速度比等于路程比--2次曲线加速减速
-*/
-static uint8_t servo_calculate_real_time_velocity(close_loop_servo_sys_t *ptr_servo)
-{
-  uint32_t cur_pos=ptr_servo->encoder.cur;
-  
-  int8_t pwr=ptr_servo->ctl.cur_pwr;
-  int8_t dir=1;
-  
-  if(ptr_servo==NULL)
-    return pwr; 
-  if(ptr_servo->motor.dir==NEGATIVE_DIR)
-  dir=-1;
-  
-  if(cur_pos*dir < ptr_servo->ctl.acceleration_stop*dir)
-  {
-    pwr=(cur_pos-ptr_servo->ctl.start)*dir*100/ptr_servo->ctl.acceleration_cnt;
-    if(pwr<(int8_t)(ptr_servo->ctl.tolerance*(-100)/ptr_servo->ctl.acceleration_cnt))
-    goto pos_err_handle;
-  }
-  else if(cur_pos*dir >= ptr_servo->ctl.deceleration_start*dir)
-  {
-    pwr=(ptr_servo->ctl.stop-cur_pos)*dir*100/ptr_servo->ctl.deceleration_cnt; 
-    if(pwr<(int8_t)(ptr_servo->ctl.tolerance*(-100)/ptr_servo->ctl.deceleration_cnt))
-    goto pos_err_handle;
-  }
-  if(pwr<0)/*应该忽略启动抖动*/
-  pwr=ptr_servo->ctl.cur_pwr;
-  return pwr;
-  
-err_handle:
-  pwr=ptr_servo->ctl.cur_pwr;
-  osMessagePut(pwr);
-  /*位置出现故障，出现在start和stop点之外，需重新计算新的位置*/
-  ctl_info_t cmd; 
-  cmd.type=MANIPULATOR_ARRIVE;
-  cmd.param8[0]=ptr_servo->ctl.tar; 
-  osMessagePut(); 
-  
-  return pwr;
-}
-static uint8_t manipulator_clear_all_flags(manipulator_t *ptr_manipulator)
-{
- APP_ASSERT(ptr_manipulator);
- ptr_manipulator->flags=0;
- return JUICE_TRUE;
-}
-static uint8_t manipulator_set_flags(manipulator_t *ptr_manipulator,uint8_t signals)
-{
- APP_ASSERT(ptr_manipulator);
- ptr_manipulator|=signals;
- return JUICE_TRUE;
-}
-static uint8_t manipulator_get_flags(manipulator_t *ptr_manipulator)
-{
- APP_ASSERT(ptr_manipulator);
- return ptr_manipulator->flags;
-}
-
-
 static void manipulator_task(void const * argument)
 {
   uint8_t ret;
@@ -1270,9 +1247,13 @@ static void manipulator_task(void const * argument)
    break;
    APP_LOG_INFO("机械手设置了新的目标点 垂直：%d 水平：%d \r\n",manipulator_servo.vertical_servo.ctl.tar,manipulator.horizontal_servo.ctl.tar);
    break;     
- case MANIPULATOR_ARRIVE:
+ case MANIPULATOR_ARRIVE_NORMAL:
    APP_LOG_INFO("机械手收到到达消息.\r\n");
-   manipulator_process_arrive(&manipulator_servo,&cmd);
+   manipulator_process_arrive_normal(&manipulator_servo,&cmd);
+   break;
+  case MANIPULATOR_ARRIVE_RESET:
+   APP_LOG_ERROR("机械手收到复位点消息.\r\n");
+   manipulator_process_arrive_reset(&manipulator_servo,&cmd);
    break;
  case MANIPULATOR_ERROR:
    APP_LOG_ERROR("机械手收到出错消息.\r\n");
@@ -1288,7 +1269,78 @@ static void manipulator_task(void const * argument)
 }
 }
 
+/*
+计算实时速度，速度比等于路程比--2次曲线加速减速
+*/
+static uint8_t servo_calculate_real_time_velocity(manipulator_servo_t *ptr_servo)
+{
+  uint32_t cur_pos=ptr_servo->encoder.cur;
+  
+  int8_t pwr=ptr_servo->ctl.cur_pwr;
+  int8_t dir=1;
+  if(ptr_servo->motor.dir==NEGATIVE_DIR)
+  dir=-1;
+  APP_ASSERT(ptr_servo);
+  
+  if(cur_pos*dir < ptr_servo->ctl.acceleration_stop*dir)
+  {
+    pwr=(cur_pos-ptr_servo->ctl.start)*dir*100/ptr_servo->ctl.acceleration_cnt;
+    if(pwr<(int8_t)(ptr_servo->ctl.tolerance*(-100)/ptr_servo->ctl.acceleration_cnt))
+     servo_start(ptr_servo); /*位置出现故障，出现在start和stop点之外，需重新计算新的位置*/
+  }
+  else if(cur_pos*dir >= ptr_servo->ctl.deceleration_start*dir)
+  {
+    pwr=(ptr_servo->ctl.stop-cur_pos)*dir*100/ptr_servo->ctl.deceleration_cnt; 
+    if(pwr<(int8_t)(ptr_servo->ctl.tolerance*(-100)/ptr_servo->ctl.deceleration_cnt))
+    servo_start(ptr_servo); /*位置出现故障，出现在start和stop点之外，需重新计算新的位置*/
+  }
+  if(pwr<0)/*应该忽略启动抖动*/
+  pwr=ptr_servo->ctl.cur_pwr;
+  
+  return pwr;
+}
 
+static uint8_t reset_sensor_update_state(reset_sensor_t *ptr_sensor)
+{
+ uint8_t  sensor_value;
+ uint32_t cur_time;
+ APP_ASSERT(ptr_sensor);
+ sensor_value=ptr_sensor->sensor.driver.sensor_get_8value();
+ cur_time=osKernelSysTick();
+ if(sensor_value==ptr_sensor->sensor.value)
+ {
+ ptr_sensor->sensor.hold_on_time+=(cur_time-ptr_sensor->last_time_update);
+ if(ptr_sensor->sensor.value == ptr_sensor->valid_value && \
+    ptr_sensor->sensor.hold_on_time>=ptr_sensor->min_hold_time)
+ ptr_sensor->valid=JUICE_TRUE;  
+ }
+ else
+ {
+  ptr_sensor->valid=JUICE_FALSE;
+  ptr_sensor->sensor.hold_on_time=0;
+  ptr_sensor->sensor.value=sensor_value;
+ }
+ ptr_sensor->last_time_update=cur_time;
+ 
+ return JUICE_FALSE;
+}
+static uint8_t is_reset_sensor_valid(reset_sensor_t *ptr_sensor)
+{
+ uint8_t ret=JUICE_FALSE;
+ if(ptr_sensor->valid==JUCIE_TRUE)
+ ret=JUICE_TRUE;
+ return ret;
+}
+static uint8_t reset_sensor_active(reset_sensor_t *ptr_sensor)
+{
+ ptr_sensor->active=JUCIE_TRUE;
+ return JUCIE_TRUE;
+}
+static uint8_t reset_sensor_inactive(reset_sensor_t *ptr_sensor)
+{
+ ptr_sensor->active=JUCIE_FALSE;
+ return JUCIE_TRUE;
+}
 
 
 static void manipulator_assistant_task(void const * argument)
@@ -1297,11 +1349,12 @@ static void manipulator_assistant_task(void const * argument)
  while(1)
  {
    
+ if(
  if(is_motor_active(&ptr_manipulator->vertical_servo.motor)==JUICE_TRUE)
  {
   if(is_
    
-   
+   servo_calculate_real_time_velocity
    
    
  } 

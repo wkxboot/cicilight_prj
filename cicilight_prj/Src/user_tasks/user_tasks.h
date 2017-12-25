@@ -210,27 +210,43 @@ typedef struct
   void (*pwr_dwn)(void);
   void (*enble)(void);
   void (*disable)(void);
-}driver_t;
+}motor_driver_t;
 
 typedef struct
 {
- uint8_t active;
- uint8_t dir;
- uint8_t cur_tag;//位置标号，与具体计数单位无关0-255
- uint8_t tar_tag;//位置标号，与具体计数单位无关0-255
- uint32_t run_time;
- driver_t driver;
+ uint8_t        active;
+ uint8_t        dir;
+ uint32_t       run_time;
+ motor_driver_t driver;
 }motor_t;//电机状态
 
+typedef struct
+{
+ union __sensor_driver
+ {
+ uint8_t  (*sensor_get_8value)(void);
+ uint16_t (*sensor_get_16value)(void);
+ uint32_t (*sensor_get_32value)(void);
+ };
+}sensor_driver_t;
 
 typedef struct 
 {
- uint8_t active;
- int32_t value;//传感器值
- uint32_t hold_on_time;//当前值保持时间
-}sensor_state_t;//整值传感器状态
+ uint8_t         active;
+ int32_t         value;//传感器值
+ uint32_t        hold_on_time;//当前值保持时间
+ sensor_driver_t driver;
+}sensor_t;//传感器
 
-
+typedef struct
+{
+ uint8_t  active;
+ uint8_t  valid;
+ uint8_t  valid_value;
+ uint8_t  min_hold_time;//有效最小保持时间
+ uint32_t last_time_update;//上次更新时间
+ sensor_t sensor;
+}reset_sensor_t;
 
 
 //对象状态机
@@ -315,6 +331,7 @@ typedef struct
  uint8_t          active;
  uint8_t          arrive;//是否到达
  uint32_t         run_time;
+ reset_sensor_t   micro_switch;
  motor_t          motor;
  rotary_encoder_t encoder;
  process_ctl_t    ctl;
