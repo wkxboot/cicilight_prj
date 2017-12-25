@@ -283,14 +283,19 @@ typedef struct
   uint16_t resolution;
 }rotary_encoder_t;
 
+typedef struct
+{
+  uint8_t  active;
+}xx;
+
 typedef struct 
 {
-  uint8_t active;
-  uint8_t cur_pwr;
-  uint8_t start_pwr; 
-  uint8_t stop_pwr;
-  uint8_t pwr_step;//功率步进值 
-  uint8_t max_pwr;//工作功率
+  uint8_t  active;
+  uint8_t  cur_pwr;
+  uint8_t  start_pwr; 
+  uint8_t  stop_pwr;
+  uint8_t  pwr_step;//功率步进值 
+  uint8_t  max_pwr;//工作功率
   uint16_t tolerance;//位置允许误差
   uint32_t max_pwr_value;
   
@@ -308,19 +313,21 @@ typedef struct
 typedef struct
 {
  uint8_t          active;
+ uint8_t          arrive;//是否到达
  uint32_t         run_time;
- motor_t    motor;
+ motor_t          motor;
  rotary_encoder_t encoder;
  process_ctl_t    ctl;
-}close_loop_servo_t;
+}manipulator_servo_t;
 
 typedef struct
 {
-  close_loop_servo_t vertical_servo;
-  close_loop_servo_t horizontal_servo;
-  coordinate_t juice_pos;
-  uint8_t active;
-}manipulator_servo_t;
+  manipulator_servo_t vertical_servo;
+  manipulator_servo_t horizontal_servo;
+  coordinate_t       juice_pos;
+  uint8_t            active;
+  uint8_t            expect_arrives;//期望的到达
+}manipulator_t;
 
 typedef struct //任务内部消息结构
 {
@@ -328,7 +335,7 @@ typedef struct //任务内部消息结构
   union __param
   {
   uint16_t param16;
-  uint8_t param8[2];
+  uint8_t  param8[2];
   };
 }ctl_info_t;
 

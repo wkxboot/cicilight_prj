@@ -745,12 +745,12 @@ static uint8_t manipulator_get_cup_lift_up_pos(manipulator_servo_t *ptr_manipula
   return JUICE_TRUE;
 }
 
-static uint8_t manipulator_get_juicing_pos(manipulator_servo_t *ptr_manipulator,uint32_t *ptr_v,uint32_t *ptr_h)
+static uint8_t manipulator_get_juicing_pos(manipulator_t *ptr_manipulator,uint32_t *ptr_v,uint32_t *ptr_h)
 {
   APP_ASSERT(ptr_manipulator);
   APP_ASSERT(ptr_v);
   APP_ASSERT(ptr_h); 
-  *ptr_h=ptr_manipulator->juice_pos.juicing.horizontal);
+  *ptr_h=ptr_manipulator->juice_pos.juicing.horizontal;
   *ptr_v=ptr_manipulator->juice_pos.juicing.vertical.sys;
   return JUICE_TRUE;
 }
@@ -759,7 +759,7 @@ static uint8_t manipulator_get_slot_pos(manipulator_servo_t *ptr_manipulator,uin
   APP_ASSERT(ptr_manipulator);
   APP_ASSERT(ptr_v);
   APP_ASSERT(ptr_h); 
-  *ptr_h=ptr_manipulator->juice_pos.slot.horizontal);
+  *ptr_h=ptr_manipulator->juice_pos.slot.horizontal;
   *ptr_v=ptr_manipulator->juice_pos.slot.vertical.sys;
   return JUICE_TRUE;
 }
@@ -769,7 +769,7 @@ static uint8_t manipulator_get_standby_pos(manipulator_servo_t *ptr_manipulator,
   APP_ASSERT(ptr_manipulator);
   APP_ASSERT(ptr_v);
   APP_ASSERT(ptr_h); 
-  *ptr_h=ptr_manipulator->juice_pos.standby.horizontal);
+  *ptr_h=ptr_manipulator->juice_pos.standby.horizontal;
   *ptr_v=ptr_manipulator->juice_pos.standby.vertical.sys;
   return JUICE_TRUE;
 }
@@ -858,6 +858,7 @@ static uint8_t manipulator_process_reset_pos(manipulator_servo_t *ptr_manipulato
   uint32_t vertical,horizontal;
   manipulator_get_reset_pos(ptr_manipulator,ptr_cmd,&vertical,&horizontal);
   manipulator_process_tar_pos(ptr_manipulator,vertical,horizontal);
+
   return JUICE_TRUE;
 }
 
@@ -883,14 +884,6 @@ static uint8_t get_servo_tag_from_ctl_info(ctl_info_t *ptr_cmd)
  return ptr_cmd->param8[0];
 }
 
-static uint8_t is_servo_finished(close_loop_servo_t *ptr_servo)
-{
-APP_ASSERT(ptr_servo);
-if(ptr_servo->ctl.stop==ptr_servo->ctl.tar) 
-return JUICE_TRUE;
-
-return JUICE_FALSE;
-}
 static uint32_t servo_get_cur_pos(close_loop_servo_t *ptr_servo)
 {
  APP_ASSERT(ptr_servo);
@@ -942,73 +935,150 @@ static void servo_pwr_on_negative(close_loop_servo_t *ptr_servo)
   ptr_servo->motor.dir=NEGATIVE_DIR;
   ptr_servo->motor.active=JUICE_FALSE;
 }
-static uint8_t servo_set_active_value(close_loop_servo_t *ptr_servo,uint8_t value)
+
+static uint8_t manipulator_active(manipulator_t *ptr_manipulator)
+{
+ APP_ASSERT(ptr_manipulator);
+ ptr_manipulator->active=JUICE_TRUE;
+ return JUCIE_TRUE;
+}
+static uint8_t manipulator_inactive(manipulator_t *ptr_manipulator)
+{
+ APP_ASSERT(ptr_manipulator);
+ ptr_manipulator->active=JUICE_FALSE;
+ return JUCIE_TRUE;
+}
+static uint8_t is_manipulator_active(manipulator_t *ptr_manipulator)
+{
+ APP_ASSERT(ptr_manipulator);
+ return ptr_manipulator->active;  
+}
+static uint8_t servo_active(close_loop_servo_t *ptr_servo)
 {
  APP_ASSERT(ptr_servo); 
- ptr_servo->ctl.active=value;
+ ptr_servo->ctl.active=JUICE_TRUE;
  return JUICE_TRUE;
 }
-static uint8_t servo_get_active_value(close_loop_servo_t *ptr_servo)
+static uint8_t servo_inactive(close_loop_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo); 
+ ptr_servo->ctl.active=JUICE_FALSE;
+ return JUICE_TRUE;
+}
+static uint8_t is_servo_active(close_loop_servo_t *ptr_servo)
 {
  APP_ASSERT(ptr_servo); 
  return ptr_servo->ctl.active;
 }
-static uint8_t motor_set_active_value(motor_t *ptr_motor,uint8_t value)
+
+static uint8_t servo_arrive(manipulator_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo); 
+ ptr_servo->arrive=JUICE_TRUE;
+ return JUICE_TRUE;
+}
+static uint8_t servo_clear_arrive(manipulator_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo); 
+ ptr_servo->arrive=JUICE_FALSE;
+ return JUICE_TRUE;
+}
+static uint8_t is_servo_arrived(manipulator_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo); 
+ return ptr_servo->arrive;
+}
+static uint8_t motor_active(motor_t *ptr_motor)
 {
  APP_ASSERT(ptr_motor); 
- ptr_motor->active=value;
+ ptr_motor->active=JUICE_TRUE;
  return JUICE_TRUE; 
 }
-static uint8_t motor_get_active_value(motor_t *ptr_motor)
+static uint8_t motor_inactive(motor_t *ptr_motor)
 {
  APP_ASSERT(ptr_motor); 
- return ptr_motor->active;
+ ptr_motor->active=JUICE_FALSE;
+ return JUICE_TRUE;
+}
+static uint8_t is_motor_active(motor_t *ptr_motor)
+{
+ APP_ASSERT(ptr_motor); 
+ return ptr_motor->arrive;  
 }
 
-static uint8_t is_manipulator_finished(manipulator_servo_t *ptr_manipulator)
+static uint8_t is_servo_stop_equivalent_to_tar_pos(manipulator_servo_t *ptr_servo)
+{
+ uint8_t ret=JUICE_FALSE
+ APP_ASSERT(ptr_servo);
+ if(ptr_servo->ctl.stop==ptr_servo->ctl.tar)
+   ret= JUICE_TRUE;
+ return ret;
+}
+static uint8_t manipulator_set_arrives(manipulator_t *ptr_manipulator,uint8_t arrives)
 {
  APP_ASSERT(ptr_manipulator); 
- if(servo_get_active_value(&ptr_manipulator->vertical_servo)==JUICE_TRUE && \
-    servo_get_active_value(&ptr_manipulator->horizontal_servo)==JUICE_TRUE  )
- return JUICE_TRUE;
- 
- return JUICE_FALSE;
+ ptr_manipulator->expect_arrives=arrives; 
+ return JUCIE_TRUE;
 }
-static uint8_t  manipulator_process_arrive(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
+static uint8_t manipulator_clear_arrives(manipulator_t *ptr_manipulator)
+{
+ APP_ASSERT(ptr_manipulator); 
+ ptr_manipulator->expect_arrives=0;
+ servo_clear_arrive(&ptr_manipulator->vertical_servo);
+ servo_clear_arrive(&ptr_manipulator->horizontal_servo);
+}
+static uint8_t is_manipulator_arrived(manipulator_t *ptr_manipulator)
+{
+ uint8_t ret=JUICE_FALSE
+ uint8_t arrives=0;
+ 
+ APP_ASSERT(ptr_manipulator); 
+ if(is_servo_arrived(&ptr_manipulator->vertical_servo)==JUICE_TRUE)
+  arrives|=VERTICAL_SERVO_ARRIVE_FLAG;
+ if(is_servo_arrived(&ptr_manipulator->horizontal_servo)==JUICE_TRUE)
+  arrives|=HORIZONTAL_SERVO_ARRIVE_FLAG
+ if(arrives ^ expect_arrives==0)
+ ret=JUICE_TRUE;
+ return ret;
+}
+static uint8_t  manipulator_process_arrive(manipulator_t *ptr_manipulator,ctl_info_t *ptr_cmd)
 {
   uint8_t servo_tag;
   uint32_t cur_pos;
-  close_loop_servo_t *ptr_servo=NULL;
   APP_ASSERT(ptr_manipulator);
   APP_ASSERT(ptr_cmd);
   servo_tag=get_servo_tag_from_ctl_info(ptr_cmd);
   if(servo_tag == VERTICAL_SERVO)
   {
-  ptr_servo=&ptr_manipulator->vertical_servo;
+  if(is_servo_stop_equivalent_to_tar_pos(&ptr_manipulator->vertical_servo)==JUICE_TRUE)
+  {
+  servo_arrive(&ptr_manipulator->vertical_servo);
   APP_LOG_INFO("垂直方向伺服到达.\r\n");
-  }
-  else if(servo_tag == HORIZONTAL_SERVO)
-  {
-  ptr_servo=&ptr_manipulator->horizontal_servo;
-  APP_LOG_INFO("水平方向伺服到达.\r\n");
-  }
-  APP_ASSERT(ptr_servo); 
-  if(is_servo_finished(ptr_servo)==JUICE_TRUE)
-  {
-   servo_set_active_value(ptr_servo,JUICE_TRUE);//本方向到达
-   APP_LOG_INFO("本方向伺服结束.\r\n");  
-   if(is_manipulator_finished(ptr_manipulator)==JUICE_TRUE)
-   {
-   APP_LOG_INFO("所有方向伺服结束.\r\n");
-   /*向榨汁任务发送消息到达指定位置*/
-   osMessagePut(queue);
-   }
   }
   else
   {
-   APP_LOG_INFO("伺服未结束，重新开始.\r\n");
-   /*发送位置同步消息*/
-   osMessagePut(queue);    
+  APP_LOG_INFO("垂直方向伺服临时到达，准备再次启动.\r\n");
+  servo_sync_start_cur_pos(&ptr_manipulator->vertical_servo); 
+  }
+  }
+  else if(servo_tag == HORIZONTAL_SERVO)
+  {
+  if(is_servo_stop_equivalent_to_tar(&ptr_manipulator->horizontal_servo)==JUCIE_TRUE)
+  {
+  servo_arrive(&ptr_manipulator->horizontal_servo);
+  APP_LOG_INFO("水平方向伺服到达.\r\n");
+  }
+  else
+  {
+  APP_LOG_INFO("水平方向伺服临时到达，准备再次启动.\r\n");
+  servo_sync_start_cur_pos(&ptr_manipulator->vertical_servo);  
+  }
+  }
+  if(is_manipulator_arrived(ptr_manipulator))
+  {
+   APP_LOG_INFO("所有方向伺服结束.\r\n");
+   /*向榨汁任务发送消息到达指定位置*/
+   osMessagePut(queue);
   }
   return JUCIE_TRUE;  
 }
@@ -1055,7 +1125,7 @@ static uint8_t manipulator_process_error(manipulator_servo_t *ptr_manipulator,ct
   APP_ASSERT(ptr_servo_err);
   APP_ASSERT(ptr_servo_ok);
   /*出错的伺服马达立即无效*/
-  motor_set_active_value(&ptr_servo_err->motor,JUICE_FALSE);
+  motor_inactive(&ptr_servo_err->motor);
   /*没有出错的伺服立即刹车*/
   servo_sync_tar_limit_brake_pos(ptr_servo_ok); 
   return JUCIE_TRUE;
@@ -1132,6 +1202,23 @@ err_handle:
   
   return pwr;
 }
+static uint8_t manipulator_clear_all_flags(manipulator_t *ptr_manipulator)
+{
+ APP_ASSERT(ptr_manipulator);
+ ptr_manipulator->flags=0;
+ return JUICE_TRUE;
+}
+static uint8_t manipulator_set_flags(manipulator_t *ptr_manipulator,uint8_t signals)
+{
+ APP_ASSERT(ptr_manipulator);
+ ptr_manipulator|=signals;
+ return JUICE_TRUE;
+}
+static uint8_t manipulator_get_flags(manipulator_t *ptr_manipulator)
+{
+ APP_ASSERT(ptr_manipulator);
+ return ptr_manipulator->flags;
+}
 
 
 static void manipulator_task(void const * argument)
@@ -1200,6 +1287,39 @@ static void manipulator_task(void const * argument)
  }                  
 }
 }
+
+
+
+
+static void manipulator_assistant_task(void const * argument)
+{
+ manipulator_t *ptr_manipulator;
+ while(1)
+ {
+   
+ if(is_motor_active(&ptr_manipulator->vertical_servo.motor)==JUICE_TRUE)
+ {
+  if(is_
+   
+   
+   
+   
+ } 
+   
+ }
+  
+}
+
+
+
+
+
+
+
+
+
+
+
 
 //机械手滑台任务
 static void manipulator_task(void const * argument)
