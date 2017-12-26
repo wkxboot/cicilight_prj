@@ -572,32 +572,11 @@ static void servo2_task(void const * argument)
  osSignalSet(sync_task_hdl,SERVO2_REACH_POS_OK_SIGNAL);
  }
 }
-//机械手滑台错误探测任务
-static void manipulator_detect_task(void const * argument)
-{
-  
-  
-  
-}
 
 static void vertical_motor_param_init()
 {
  vertical_motor.acceleration_dis=VERTICAL_MOTOR_ACCELERATION_DISTANCE;
  vertical_motor.deceleration_dis=VERTICAL_MOTOR_DECELERATION_DISTANCE;
- 
-}
-
-static void servo_set_ctl(close_loop_servo_sys_t *ptr_servo,uint8_t value)
-{
-ptr_servo->ctl.active=value;  
-}
-static void servo_set_servo(close_loop_servo_sys_t *ptr_servo,uint8_t value)
-{
-ptr_servo->active=value;  
-}
-static void servo_set_motor(close_loop_servo_sys_t *ptr_servo,uint8_t value)
-{
- ptr_servo->motor.active=value;   
 }
 
 static uint8_t servo_set_tar_pos(close_loop_servo_sys_t *ptr_servo,uint32_t pos)
@@ -607,7 +586,6 @@ static uint8_t servo_set_tar_pos(close_loop_servo_sys_t *ptr_servo,uint32_t pos)
   ptr_servo->ctl.active=JUICE_TRUE; 
   return JUICE_TRUE;
 }
-
 static uint32_t servo_calculate_limit_brake_pos(close_loop_servo_sys_t *ptr_servo)
 {
   int8_t delta_pwr,dir=1;
@@ -654,7 +632,7 @@ static void servo_calculate_acc_dec_pos(close_loop_servo_sys_t *ptr_servo)
   uint32_t dis,dis_acc_dec;
   
   if(ptr_servo==NULL)
-    return;
+  return;
   if(ptr_servo->motor.dir==NEGATIVE_DIR)
   dir=-1;
   
@@ -785,7 +763,7 @@ static uint8_t servo_calculate_process_ctl_pos(close_loop_servo_t *ptr_servo)
   /*计算伺服当前速度下的加速点和减速点*/
   servo_calculate_acc_dec_pos(ptr_servo);  
 }
-static uint8_t servo_start(close_loop_servo_t *ptr_servo,uint32_t pos)
+static uint8_t servo_restart(close_loop_servo_t *ptr_servo,uint32_t pos)
 {  
   APP_ASSERT(ptr_servo);
   /*设置伺服系统目标点*/
@@ -793,8 +771,6 @@ static uint8_t servo_start(close_loop_servo_t *ptr_servo,uint32_t pos)
   servo_calculate_process_ctl_pos(ptr_servo);
   return JUICE_TRUE; 
 }
-
-
 
 static uint8_t  manipulator_start(manipulator_servo_t *ptr_manipulator,uint32_t vertical,uint32_t horizontal)
 { 
@@ -806,8 +782,6 @@ static uint8_t  manipulator_start(manipulator_servo_t *ptr_manipulator,uint32_t 
   servo_start(&ptr_manipulator->horizontal_servo,horizontal); 
   return JUICE_TRUE;
 }
-
-
 
 static uint8_t manipulator_process_cup_top_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
 {
@@ -830,7 +804,6 @@ static uint8_t manipulator_process_lift_up_cup_pos(manipulator_servo_t *ptr_mani
   manipulator_start(ptr_manipulator,vertical,horizontal);
   return JUICE_TRUE;
 }
-
 
 static uint8_t manipulator_process_standby_pos(manipulator_servo_t *ptr_manipulator,ctl_info_t *ptr_cmd)
 {
@@ -866,8 +839,6 @@ static uint8_t manipulator_process_reset_pos(manipulator_t *ptr_manipulator,ctl_
 
   return JUICE_TRUE;
 }
-
-
 /*
  重新开始。同步起始点和当前位置点，由于位置错误或者到达stop点。
 */
@@ -880,8 +851,6 @@ static uint8_t servo_restart(close_loop_servo_t *ptr_servo)
  servo_calculate_process_ctl_pos(ptr_servo);
  return JUICE_TRUE;
 }
-
-
 
 static uint8_t get_servo_tag_from_ctl_info(ctl_info_t *ptr_cmd)
 {
@@ -919,7 +888,6 @@ static uint8_t servo_set_start_pos(close_loop_servo_t *ptr_servo,uint32_t pos)
  ptr_servo->ctl.start=pos; 
  return JUICE_TRUE;
 }
-
 
 static void servo_pwr_dwn(close_loop_servo_t *ptr_servo)
 {
@@ -1016,7 +984,7 @@ static uint8_t is_servo_stop_equivalent_to_tar_pos(manipulator_servo_t *ptr_serv
  uint8_t ret=JUICE_FALSE
  APP_ASSERT(ptr_servo);
  if(ptr_servo->ctl.stop==ptr_servo->ctl.tar)
-   ret= JUICE_TRUE;
+ ret= JUICE_TRUE;
  return ret;
 }
 static uint8_t manipulator_set_arrives(manipulator_t *ptr_manipulator,uint8_t arrives)
@@ -1036,7 +1004,6 @@ static uint8_t is_manipulator_arrived(manipulator_t *ptr_manipulator)
 {
  uint8_t ret=JUICE_FALSE
  uint8_t arrives=0;
- 
  APP_ASSERT(ptr_manipulator); 
  if(is_servo_arrived(&ptr_manipulator->vertical_servo)==JUICE_TRUE)
   arrives|=VERTICAL_SERVO_ARRIVE_FLAG;
@@ -1130,8 +1097,7 @@ static uint8_t manipulator_process_arrive_reset(manipulator_t *ptr_manipulator,c
    APP_LOG_WARNING("水平方向开始刹车.\r\n");
    servo_start_brake(&ptr_manipulator->horizontal_servo);
    osMessagePut(reset_ok);
-  }
-  
+  } 
   return JUICE_TRUE;  
 }
 
@@ -1343,11 +1309,11 @@ return JUICE_TRUE;
 /*
 计算实时速度，速度比等于路程比--2次曲线加速减速
 */
-static uint8_t servo_calculate_real_time_velocity(manipulator_servo_t *ptr_servo)
+static uint8_t servo_calculate_real_time_pwr(manipulator_servo_t *ptr_servo)
 {
   uint32_t cur_pos=ptr_servo->encoder.cur;
   
-  int8_t pwr=ptr_servo->ctl.cur_pwr;
+  int8_t pwr;
   int8_t dir=1;
   if(ptr_servo->motor.dir==NEGATIVE_DIR)
   dir=-1;
@@ -1356,27 +1322,64 @@ static uint8_t servo_calculate_real_time_velocity(manipulator_servo_t *ptr_servo
   if(cur_pos*dir < ptr_servo->ctl.acceleration_stop*dir)
   {
     pwr=(cur_pos-ptr_servo->ctl.start)*dir*100/ptr_servo->ctl.acceleration_cnt;
+    if(pwr<0)
+    {
     if(pwr<(int8_t)(ptr_servo->ctl.tolerance*(-100)/ptr_servo->ctl.acceleration_cnt))
-     servo_start(ptr_servo); /*位置出现故障，出现在start和stop点之外，需重新计算新的位置*/
+     servo_restart(ptr_servo); /*位置出现故障，出现在start和stop点之外，需重新计算新的位置*/
+     /*应该忽略启动抖动*/
+     pwr=ptr_servo->ctl.cur_pwr;
+    }
+    else
+    {
+     if(pwr>=ptr_servo->ctl.max_pwr)
+     pwr=ptr_servo->ctl.max_pwr;
+     else if(pwr < ptr_servo->ctl.start_pwr)
+     pwr=ptr_servo->ctl.start_pwr;
+     else if(ptr_servo->ctl.cur_pwr+ptr_servo->ctl.pwr_step > pwr)
+     pwr=ptr_servo->ctl.cur_pwr;
+    }
   }
   else if(cur_pos*dir >= ptr_servo->ctl.deceleration_start*dir)
   {
     pwr=(ptr_servo->ctl.stop-cur_pos)*dir*100/ptr_servo->ctl.deceleration_cnt; 
+    if(pwr<0)
+    {
     if(pwr<(int8_t)(ptr_servo->ctl.tolerance*(-100)/ptr_servo->ctl.deceleration_cnt))
-    servo_start(ptr_servo); /*位置出现故障，出现在start和stop点之外，需重新计算新的位置*/
+    servo_restart(ptr_servo); /*位置出现故障，出现在start和stop点之外，需重新计算新的位置*/  
+    /*应该忽略启动抖动*/
+    pwr=ptr_servo->ctl.cur_pwr;
+    }
+    else
+    {
+     if(pwr>=ptr_servo->ctl.max_pwr)
+     pwr=ptr_servo->ctl.max_pwr;
+     else if(pwr < ptr_servo->ctl.stop_pwr)
+     pwr=ptr_servo->ctl.stop_pwr;
+     else if(ptr_servo->ctl.cur_pwr < pwr+ptr_servo->ctl.pwr_step)
+     pwr=ptr_servo->ctl.cur_pwr;   
+    }
   }
-  if(pwr>=ptr_servo->ctl.max_pwr)
-  pwr=ptr_servo->ctl.max_pwr;
-  if(pwr<0)/*应该忽略启动抖动*/
-  pwr=ptr_servo->ctl.cur_pwr;
-  
   return pwr;
 }
-
-static uint8_t servo_get_max_pwr(manipulator_servo_t *ptr_servo)
+static uint8_t servo_calculate_real_time_dir(manipulator_servo_t *ptr_servo)
 {
  APP_ASSERT(ptr_servo);
- return ptr_servo->ctl.max_pwr;
+ if(ptr_servo->motor.active==JUICE_TRUE)
+ {
+   
+   
+   
+   
+   
+ }
+}
+
+
+
+static uint32_t servo_get_max_pwr_value(manipulator_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo);
+ return ptr_servo->ctl.max_pwr_value;
 }
 static uint8_t servo_get_cur_pwr(manipulator_servo_t *ptr_servo)
 {
@@ -1387,6 +1390,12 @@ static uint8_t servo_set_cur_pwr(manipulator_servo_t *ptr_servo,uint8_t pwr)
 {
  APP_ASSERT(ptr_servo);
  ptr_servo->ctl.cur_pwr=pwr;
+ return JUCIE_TRUE;
+}
+static uint8_t servo_set_cur_pwr_value(manipulator_servo_t *ptr_servo,uint32_t pwr_value)
+{
+ APP_ASSERT(ptr_servo);
+ ptr_servo->motor.driver.pwr_value(pwr_value);
  return JUCIE_TRUE;
 }
 static uint8_t servo_set_normal_max_pwr(manipulator_servo_t *ptr_servo)
@@ -1401,43 +1410,28 @@ static uint8_t servo_set_show_max_pwr(manipulator_servo_t *ptr_servo)
  ptr_servo->ctl.max_pwr=ptr_servo->show_pwr;
  return JUCIE_TRUE;
 }
-
-static uint8_t servo_get_max_pwr_value(manipulator_servo_t *ptr_servo)
-{
- APP_ASSERT(ptr_servo);
- return ptr_servo->ctl.cur_pwr;
-}
-
-
-static uint8_t servo_calculate_real_time_dir(manipulator_servo_t *ptr_servo)
-{
- APP_ASSERT(ptr_servo);  
-}
 static uint8_t is_servo_pwr_update(manipulator_servo_t *ptr_servo,uint8_t pwr)
 {
- uint8_t ret=JUICE_FALSE;
+ uitn8_t ret=JUICE_FALSE;
+ uint8_t cur_pwr;
  APP_ASSERT(ptr_servo); 
- if(pwr>=ptr_servo->ctl.max_pwr && ptr_servo->ctl.cur_pwr<=ptr_servo->ctl.max_pwr)
+ cur_pwr=servo_get_cur_pwr(ptr_servo);
+ if(pwr!=cur_pwr)
  ret=JUICE_TRUE;
- else if((ptr_servo->ctl.cur_pwr > pwr?ptr_servo->ctl.cur_pwr-pwr:pwr-ptr_servo->ctl.cur_pwr)>= ptr_servo->ctl.pwr_step)
- ret=JUICE_TRUE; 
- 
  return ret;
 }
-
-static uint8_t servo_update_pwr(manipulator_servo_t *ptr_servo)
+static uint8_t servo_update_pwr(manipulator_servo_t *ptr_servo,uint8_t pwr)
 {
  uint8_t  pwr,cur_pwr,max_pwr;
- uint32_t cur_pwr_value;
+ uint32_t max_pwr_value;
  APP_ASSERT(ptr_servo);
- pwr=servo_calculate_real_time_pwr(ptr_servo);
+ pwr=servo_calculate_real_time_pwr(ptr_servo); 
  if(is_servo_pwr_update(ptr_servo,pwr)==JUICE_TRUE)
  {
-   servo_set_cur_pwr(ptr_servo,pwr);
-   APP_LOG_INFO("更新功率：%d.\r\n",pwr);
-   max_pwr=servo_get_max_pwr(ptr_servo);
-   cur_pwr_value=servo_get_max_pwr_value*cur/100;
-   ptr_servo->motor.driver.pwr_value(cur_pwr_value);
+  max_pwr_value=servo_get_max_pwr_value(ptr_servo);
+  servo_set_cur_pwr(ptr_servo,pwr);
+  servo_set_cur_pwr_value(ptr_servo,pwr*max_pwr_value/100);
+  APP_LOG_INFO("更新功率比：%d \%.功率值：%d\r\n",pwr,pwr*ptr_servo->ctl.max_pwr_value/100);
  }
  return JUICE_TRUE;
 }
@@ -1455,346 +1449,11 @@ static void manipulator_assistant_task(void const * argument)
  manipulator_t *ptr_manipulator;
  while(1)
  {
-   manipulator_assistant_detect_reset_pos(ptr_manipulator);
-
-
-   
+   manipulator_assistant_detect_reset_pos(ptr_manipulator); 
    
  } 
-   
- }
+}
  
-
-
-
-
-
-
-
-
-
-
-
-
-//机械手滑台任务
-static void manipulator_task(void const * argument)
-{
-
- osEvent msg;
- //参数初始话
-
- APP_LOG_INFO("++++++机械手滑台任务开始！\r\n");
- manipulator.row.sensor_state=BSP_get_row_pos_sensor_state();
- manipulator.column.sensor_state=BSP_get_column_pos_sensor_state();
- while(1)
- {
- msg=osMessageGet(manipulator_msg_queue_hdl,osWaitForever);
- if(msg.status!=osEventMessage )
- continue;
- {
- APP_LOG_INFO("机械手滑台任务收到消息！\r\n");
- if(msg.value.v<=MANIPULATOR_STOP_MSG)
- {
- APP_LOG_INFO("机械手滑台命令消息！\r\n");
- if(msg.value.v==MANIPULATOR_RESET_POS_MSG)
- {
- manipulator.tar_coordinate=matrix.coordinate[RESET_X_IDX][RESET_Y_IDX];
- APP_LOG_INFO("机械手滑台复位点命令消息！\r\n");
- }
- else if(msg.value.v == MANIPULATOR_STOP_MSG)
- {
- APP_LOG_INFO("机械手滑台停止命令消息！\r\n");
- } 
- else if(manipulator.is_coordinate_valid==JUICE_FALSE) 
- {
- APP_LOG_INFO("机械手没有完成复位，忽略此单步命令！\r\n");
- continue;
- if(msg.value.v == MANIPULATOR_JUICING_POS_MSG)
- {
-   manipulator.tar_coordinate=matrix.coordinate[JUICING_X_IDX][JUICING_Y_IDX];
-   APP_LOG_INFO("机械手滑台榨汁口命令消息！\r\n");
- }
- else if(msg.value.v == MANIPULATOR_UP_STEP_MSG)
- {
-   if(manipulator.cur_coordinate.idx.y>=COORDINATE_MAX_Y_IDX)
-   continue;
-   manipulator.tar_coordinate=matrix.coordinate[manipulator.cur_coordinate.idx.x][manipulator.cur_coordinate.idx.y+1];
-   APP_LOG_INFO("机械手滑台上移一步命令消息！\r\n");
- }
- else if(msg.value.v == MANIPULATOR_DWN_STEP_MSG)
- {
-   if(manipulator.cur_coordinate.idx.y<=COORDINATE_MIN_Y_IDX)
-   continue;
-   manipulator.tar_coordinate=matrix.coordinate[manipulator.cur_coordinate.idx.x][manipulator.cur_coordinate.idx.y-1];
-   APP_LOG_INFO("机械手滑台下移一步命令消息！\r\n");
- }
- else if(msg.value.v == MANIPULATOR_LEFT_STEP_MSG)
- {
-   if(manipulator.cur_coordinate.idx.x<=COORDINATE_MIN_X_IDX)
-   continue;
-   manipulator.tar_coordinate=matrix.coordinate[manipulator.cur_coordinate.idx.x-1][manipulator.cur_coordinate.idx.y];
-   APP_LOG_INFO("机械手滑台左移一步命令消息！\r\n");
- }
- else if(msg.value.v == MANIPULATOR_RIGHT_STEP_MSG)
- {
-   if(manipulator.cur_coordinate.idx.x>=COORDINATE_MAX_X_IDX)
-   continue;
-   manipulator.tar_coordinate=matrix.coordinate[manipulator.cur_coordinate.idx.x+1][manipulator.cur_coordinate.idx.y];
-   APP_LOG_INFO("机械手滑台右移一步命令消息！\r\n");
- }
- }
- }
- else
- {
- APP_LOG_INFO("机械手滑台运行到具体位置消息！\r\n");
- row_sensor_pos=msg.value.v>>8;
- column_sensor_pos=msg.value.v&0xff;
- }
-
- manipulator.row.tar_pos= row_sensor_pos; 
- manipulator.column.tar_pos=column_sensor_pos;
- manipulator.row.active= JUICE_TRUE; 
- manipulator.column.active=JUICE_TRUE;
- manipulator.msg_send=JUICE_FALSE;
- manipulator.row.run_time=0;
- manipulator.column.run_time=0;
- manipulator.row.sensor_hold_on_time=0;
- manipulator.column.sensor_hold_on_time=0; 
- 
- APP_LOG_INFO("目标位置sensor pos x：%d  y：%d！\r\n",row_sensor_pos,column_sensor_pos);
- }
- 
- //传感器状态
- row_sensor_state=BSP_get_row_pos_sensor_state();
- //行步进电机确定当前的位置
- if(BSP_is_row_step_motor_in_rst_pos()==JUICE_TRUE && manipulator.row.cur_pos!=SENSOR_POS_IN_ROW_RST )
- {
-  manipulator.row.cur_pos=SENSOR_POS_IN_ROW_RST;
-  manipulator.row.sensor_state=row_sensor_state;
-  if(manipulator.row.dir==NULL_DIR)
-  manipulator.row.tar_pos=SENSOR_POS_IN_ROW_RST;
-  
-  APP_LOG_DEBUG("行步进电机到达复位点！\r\n");
- }
- 
- if(row_sensor_state!=manipulator.row.sensor_state)//和原来的状态不一样
- {
-  manipulator.row.sensor_valid_time+=MANIPULATOR_INTERVAL_VALUE;
-  if(manipulator.row.sensor_valid_time>=MANIPULATOR_ROW_SENSOR_VALID_TIMEOUT_VALUE)
-  {
-   manipulator.row.sensor_valid_time=0;
-   manipulator.row.sensor_state=row_sensor_state;
-   
-   if(manipulator.row.cur_pos!=SENSOR_POS_IN_ROW_NULL)//如果已经确定了当前的位置，才可以继续确定当前的位置。只有复位才能第一次确定当前的位置！
-   {
-   if(manipulator.row.dir==POSITIVE_DIR)
-   {
-   manipulator.row.cur_pos++;
-   manipulator.row.sensor_hold_on_time=0;
-   APP_LOG_WARNING("行步进电机位置 +1 当前位置：%d！\r\n",manipulator.row.cur_pos);
-   }
-   else if(manipulator.row.dir==NEGATIVE_DIR)
-   {
-   manipulator.row.cur_pos--;
-   manipulator.row.sensor_hold_on_time=0;
-   APP_LOG_WARNING("行步进电机位置 -1 当前位置：%d！\r\n",manipulator.row.cur_pos);  
-   }
-   else
-   {
-   manipulator.row.cur_pos=SENSOR_POS_IN_ROW_NULL;
-   manipulator.row.tar_pos=SENSOR_POS_IN_ROW_NULL;
-   APP_LOG_WARNING("行步进电机位置被外部强制改变！位置置空！当前位置：%d！\r\n",manipulator.row.cur_pos);  
-   }
-  }
-  else
-  {
-    manipulator.row.sensor_hold_on_time=0;//只有检测到位置变化，状态保持时间清零。
-    APP_LOG_WARNING("行步进电机位置为空，忽略位置变动！\r\n"); 
-  }  
-  }
- }
- else if(manipulator.row.sensor_valid_time > 0)
- {
- manipulator.row.sensor_valid_time=0;
- APP_LOG_WARNING("行步进电机传感器抖动，忽略位置变动！\r\n"); 
- }
- 
- //行步进电机确定当前运行方向
- if(manipulator.row.tar_pos < manipulator.row.cur_pos && manipulator.row.dir!=NEGATIVE_DIR)
- {
-  manipulator.row.dir=NEGATIVE_DIR;
-  BSP_row_step_motor_pwr_on_negative();//反向运动
-  APP_LOG_INFO("行目标位置 < 当前位置，设置行方向 = NEGATIVE_DIR！行步进电机反转！\r\n");
- }
- else if(manipulator.row.tar_pos > manipulator.row.cur_pos && manipulator.row.dir!=POSITIVE_DIR)
- {
-  manipulator.row.dir=POSITIVE_DIR;
-  BSP_row_step_motor_pwr_on_positive();//正向运动
-  APP_LOG_INFO("行目标位置 > 当前位置，设置行方向 = POSITIVE_DIR！行步进电机正转！\r\n");
- }
- else if(manipulator.row.tar_pos == manipulator.row.cur_pos &&  manipulator.row.dir!=NULL_DIR)
- {
-  manipulator.row.dir=NULL_DIR;
-  BSP_row_step_motor_pwr_dwn();//停机
-  APP_LOG_INFO("行目标位置 == 当前位置，设置行方向 = DIR_NULL！行步进电机停机！\r\n"); 
- }
- 
- //列传感器状态
-  column_sensor_state=BSP_get_column_pos_sensor_state();
- //列步进电机确定当前的位置
- if(BSP_is_column_step_motor_in_rst_pos()==JUICE_TRUE && manipulator.column.cur_pos!=SENSOR_POS_IN_COLUMN_RST)
- {
-  manipulator.column.cur_pos=SENSOR_POS_IN_COLUMN_RST;
-  manipulator.column.sensor_state=column_sensor_state;
-  if(manipulator.column.dir==NULL_DIR)
-  manipulator.column.tar_pos=SENSOR_POS_IN_COLUMN_RST;
-  
-  APP_LOG_INFO("列步进电机到达复位点！\r\n");
- }
- 
- if(column_sensor_state!=manipulator.column.sensor_state)//和原来的状态不一样
- {
-   manipulator.column.sensor_valid_time+=MANIPULATOR_INTERVAL_VALUE;
-   if(manipulator.column.sensor_valid_time>=MANIPULATOR_COLUMN_SENSOR_VALID_TIMEOUT_VALUE)
-   {
-    manipulator.column.sensor_valid_time=0;
-    manipulator.column.sensor_state=column_sensor_state;
-   if(manipulator.column.cur_pos!=SENSOR_POS_IN_COLUMN_NULL)//如果已经确定了当前的位置，才可以继续确定当前的位置。只有复位才能第一次确定当前的位置！
-   {
-   if(manipulator.column.dir==POSITIVE_DIR)
-   {
-   manipulator.column.cur_pos++;
-   manipulator.column.sensor_hold_on_time=0;
-   APP_LOG_WARNING("列步进电机位置 +1 当前位置：%d！\r\n",manipulator.column.cur_pos);
-   }
-   else if(manipulator.column.dir==NEGATIVE_DIR)
-   {
-   manipulator.column.cur_pos--;
-   manipulator.column.sensor_hold_on_time=0;
-   APP_LOG_WARNING("列步进电机位置 -1 当前位置：%d！\r\n",manipulator.column.cur_pos);  
-   }
-   else
-   {
-   manipulator.column.cur_pos=SENSOR_POS_IN_COLUMN_NULL;
-   manipulator.column.tar_pos=SENSOR_POS_IN_COLUMN_NULL;
-   APP_LOG_WARNING("列步进电机位置被外部强制改变！位置置空！当前位置：%d！\r\n",manipulator.column.cur_pos);  
-   }
-   }
-   else
-   {
-   manipulator.column.sensor_hold_on_time=0;//只有检测到位置变化，状态保持时间清零。
-   APP_LOG_WARNING("列步进电机位置为空，忽略位置变动！\r\n"); 
-   }
-   }
- }
- else if(manipulator.column.sensor_valid_time>0)
- {
-  manipulator.column.sensor_valid_time=0;
-  APP_LOG_WARNING("列步进电机传感器抖动，忽略位置变动！\r\n");  
- }
- 
- if(manipulator.column.tar_pos < manipulator.column.cur_pos && manipulator.column.dir!=NEGATIVE_DIR)
- {
-  manipulator.column.dir=NEGATIVE_DIR;
-  manipulator.column.run_time=0;
-  BSP_column_step_motor_pwr_on_negative();//反向运动
-  APP_LOG_INFO("列目标位置 < 当前位置，设置列方向 = NEGATIVE_DIR！列步进电机反转！\r\n");
- }
- else if(manipulator.column.tar_pos > manipulator.column.cur_pos && manipulator.column.dir!=POSITIVE_DIR)
- {
-  manipulator.column.dir=POSITIVE_DIR;
-  manipulator.column.run_time=0;
-  BSP_column_step_motor_pwr_on_positive();//正向运动
-  APP_LOG_INFO("列目标位置 > 当前位置，设置列方向 = POSITIVE_DIR！列步进电机正转！\r\n");
- }
- else if(manipulator.column.tar_pos == manipulator.column.cur_pos && manipulator.column.dir!=NULL_DIR)
- {
-  manipulator.column.dir=NULL_DIR;
-  manipulator.column.run_time=0;
-  BSP_column_step_motor_pwr_dwn();//停机
-  APP_LOG_INFO("列目标位置 == 当前位置，设置列方向 = DIR_NULL！列步进电机停机！\r\n"); 
- }
-
- //运行时间
- if(manipulator.row.dir!=NULL_DIR)
- {
- manipulator.row.run_time+=MANIPULATOR_INTERVAL_VALUE;
- manipulator.row.sensor_hold_on_time+=MANIPULATOR_INTERVAL_VALUE;
- }
- if(manipulator.column.dir!=NULL_DIR) 
- {
- manipulator.column.run_time+=MANIPULATOR_INTERVAL_VALUE;
- manipulator.column.sensor_hold_on_time+=MANIPULATOR_INTERVAL_VALUE;
- }
- 
- //全部到位发送到位消息
- if( manipulator.msg_send==JUICE_FALSE && manipulator.row.tar_pos == manipulator.row.cur_pos && manipulator.column.tar_pos == manipulator.column.cur_pos )
- {
-  osSignalSet(sync_task_hdl,MANIPULATOR_REACH_POS_OK_SIGNAL);
-  manipulator.msg_send=JUICE_TRUE;
-  APP_LOG_INFO("机械手全部到达目标位置，发送到位信号！\r\n"); 
- }
- 
- //运动时检测错误  
- if(manipulator.column.run_time >= MANIPULATOR_STALL_IGNORE_TIMEOUT &&\
-   (juice_is_column_step_motor_stall()==JUICE_TRUE || BSP_is_column_step_motor_fault()==JUICE_TRUE))
- {
- manipulator.column.active=JUICE_FALSE;
- juice_set_fault_code(FAULT_CODE_COLUMN_STEP_MOTOR_FAULT);
- APP_LOG_ERROR("列步进电机故障！\r\n"); 
- }
- if(manipulator.row.sensor_hold_on_time>=MANIPULATOR_ROW_SENSOR_HOLD_ON_TIMEOUT || manipulator.column.sensor_hold_on_time>=MANIPULATOR_COLUMN_SENSOR_HOLD_ON_TIMEOUT)
- {
- manipulator.row.active=JUICE_FALSE;
- manipulator.column.active=JUICE_FALSE;
- juice_set_fault_code(FAULT_CODE_MANIPULATOR_TIMEOUT);
- 
- APP_LOG_ERROR("机械手运行超时故障！\r\n"); 
- if(manipulator.row.sensor_hold_on_time>=MANIPULATOR_ROW_SENSOR_HOLD_ON_TIMEOUT)
- {
- APP_LOG_ERROR("机械手行方向超感器运行超时故障！\r\n"); 
- }
- else
- {
- APP_LOG_ERROR("机械手列方向超感器运行超时故障！\r\n"); 
- }
- }
-    
- if(juice_is_24v_oc()==JUICE_TRUE && (manipulator.column.active==JUICE_TRUE || manipulator.row.active==JUICE_TRUE))
- {
- manipulator.column.active=JUICE_FALSE;
- manipulator.row.active=JUICE_FALSE;
- juice_set_fault_code(FAULT_CODE_24V_OC);
- APP_LOG_ERROR("24V电流过载！\r\n"); 
- }
-
- if(manipulator.msg_send==JUICE_FALSE && (manipulator.row.active==JUICE_FALSE||manipulator.column.active==JUICE_FALSE))
- {
-  APP_LOG_ERROR("行步进电机和列步进电机停机！\r\n"); 
-  APP_LOG_ERROR("机械手错误，发送未到达目标位信号！\r\n"); 
-  manipulator.row.dir=NULL_DIR;
-  manipulator.column.dir=NULL_DIR;
-  manipulator.row.active=JUICE_FALSE;
-  manipulator.column.active=JUICE_FALSE;
-  manipulator.row.run_time=0;
-  manipulator.column.run_time=0;
-  manipulator.row.sensor_hold_on_time=0;
-  manipulator.column.sensor_hold_on_time=0;
-  manipulator.row.tar_pos=manipulator.row.cur_pos;
-  manipulator.column.tar_pos=manipulator.column.cur_pos;
-
-  BSP_row_step_motor_pwr_dwn();//停机
-  BSP_column_step_motor_pwr_dwn();//停机
-  osSignalSet(sync_task_hdl,MANIPULATOR_REACH_POS_ERR_SIGNAL);
-  manipulator.msg_send=JUICE_TRUE;
- }
-  //机械手速度步进
- manipulator_pwm_frequency(manipulator.msg_send,MANIPULATOR_INTERVAL_VALUE);
- osDelay(MANIPULATOR_INTERVAL_VALUE);
- }
- }
-
-
 //压杯任务
 static void presser_task(void const * argument)
 {
