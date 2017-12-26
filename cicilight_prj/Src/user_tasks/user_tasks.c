@@ -1269,36 +1269,7 @@ static void manipulator_task(void const * argument)
 }
 }
 
-/*
-计算实时速度，速度比等于路程比--2次曲线加速减速
-*/
-static uint8_t servo_calculate_real_time_velocity(manipulator_servo_t *ptr_servo)
-{
-  uint32_t cur_pos=ptr_servo->encoder.cur;
-  
-  int8_t pwr=ptr_servo->ctl.cur_pwr;
-  int8_t dir=1;
-  if(ptr_servo->motor.dir==NEGATIVE_DIR)
-  dir=-1;
-  APP_ASSERT(ptr_servo);
-  
-  if(cur_pos*dir < ptr_servo->ctl.acceleration_stop*dir)
-  {
-    pwr=(cur_pos-ptr_servo->ctl.start)*dir*100/ptr_servo->ctl.acceleration_cnt;
-    if(pwr<(int8_t)(ptr_servo->ctl.tolerance*(-100)/ptr_servo->ctl.acceleration_cnt))
-     servo_start(ptr_servo); /*位置出现故障，出现在start和stop点之外，需重新计算新的位置*/
-  }
-  else if(cur_pos*dir >= ptr_servo->ctl.deceleration_start*dir)
-  {
-    pwr=(ptr_servo->ctl.stop-cur_pos)*dir*100/ptr_servo->ctl.deceleration_cnt; 
-    if(pwr<(int8_t)(ptr_servo->ctl.tolerance*(-100)/ptr_servo->ctl.deceleration_cnt))
-    servo_start(ptr_servo); /*位置出现故障，出现在start和stop点之外，需重新计算新的位置*/
-  }
-  if(pwr<0)/*应该忽略启动抖动*/
-  pwr=ptr_servo->ctl.cur_pwr;
-  
-  return pwr;
-}
+
 
 static uint8_t reset_sensor_update_state(reset_sensor_t *ptr_sensor)
 {
@@ -1333,35 +1304,166 @@ static uint8_t is_reset_sensor_valid(reset_sensor_t *ptr_sensor)
 }
 static uint8_t reset_sensor_active(reset_sensor_t *ptr_sensor)
 {
+ APP_ASSERT(ptr_sensor);
  ptr_sensor->active=JUCIE_TRUE;
  return JUCIE_TRUE;
 }
 static uint8_t reset_sensor_inactive(reset_sensor_t *ptr_sensor)
 {
+ APP_ASSERT(ptr_sensor);
  ptr_sensor->active=JUCIE_FALSE;
  return JUCIE_TRUE;
 }
+static uint8_t is_reset_sensor_active(reset_sensor_t *ptr_sensor)
+{
+ APP_ASSERT(ptr_sensor);
+ return ptr_sensor->active;
+}
 
+static uint8_t servo_detect_reset_pos(manipulator_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo);
+ if(is_motor_active(&ptr_servo->motor)==JUICE_TRUE)
+ {
+   /*在伺服系统无效时，寻找检测复位点*/
+   if(is_servo_active(ptr_servo)==JUICE_FALSE && \
+      is_reset_sensor_active(&ptr_servo->reset_ms)==JUICE_TRUE)
+   {
+    reset_sensor_update_state(&ptr_servo->reset_ms);
+    if(is_reset_sensor_valid(&ptr_servo->reset_ms)==JUICE_TRUE)
+    {
+    reset_sensor_inactive(&ptr_servo->reset_ms);
+    osMessagePut(arrive_reset_pos);
+    }
+   }
+ }
+return JUICE_TRUE; 
+}
+
+/*
+计算实时速度，速度比等于路程比--2次曲线加速减速
+*/
+static uint8_t servo_calculate_real_time_velocity(manipulator_servo_t *ptr_servo)
+{
+  uint32_t cur_pos=ptr_servo->encoder.cur;
+  
+  int8_t pwr=ptr_servo->ctl.cur_pwr;
+  int8_t dir=1;
+  if(ptr_servo->motor.dir==NEGATIVE_DIR)
+  dir=-1;
+  APP_ASSERT(ptr_servo);
+  
+  if(cur_pos*dir < ptr_servo->ctl.acceleration_stop*dir)
+  {
+    pwr=(cur_pos-ptr_servo->ctl.start)*dir*100/ptr_servo->ctl.acceleration_cnt;
+    if(pwr<(int8_t)(ptr_servo->ctl.tolerance*(-100)/ptr_servo->ctl.acceleration_cnt))
+     servo_start(ptr_servo); /*位置出现故障，出现在start和stop点之外，需重新计算新的位置*/
+  }
+  else if(cur_pos*dir >= ptr_servo->ctl.deceleration_start*dir)
+  {
+    pwr=(ptr_servo->ctl.stop-cur_pos)*dir*100/ptr_servo->ctl.deceleration_cnt; 
+    if(pwr<(int8_t)(ptr_servo->ctl.tolerance*(-100)/ptr_servo->ctl.deceleration_cnt))
+    servo_start(ptr_servo); /*位置出现故障，出现在start和stop点之外，需重新计算新的位置*/
+  }
+  if(pwr>=ptr_servo->ctl.max_pwr)
+  pwr=ptr_servo->ctl.max_pwr;
+  if(pwr<0)/*应该忽略启动抖动*/
+  pwr=ptr_servo->ctl.cur_pwr;
+  
+  return pwr;
+}
+
+static uint8_t servo_get_max_pwr(manipulator_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo);
+ return ptr_servo->ctl.max_pwr;
+}
+static uint8_t servo_get_cur_pwr(manipulator_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo);
+ return ptr_servo->ctl.cur_pwr;
+}
+static uint8_t servo_set_cur_pwr(manipulator_servo_t *ptr_servo,uint8_t pwr)
+{
+ APP_ASSERT(ptr_servo);
+ ptr_servo->ctl.cur_pwr=pwr;
+ return JUCIE_TRUE;
+}
+static uint8_t servo_set_normal_max_pwr(manipulator_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo);
+ ptr_servo->ctl.max_pwr=ptr_servo->normal_pwr;
+ return JUCIE_TRUE;
+}
+static uint8_t servo_set_show_max_pwr(manipulator_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo);
+ ptr_servo->ctl.max_pwr=ptr_servo->show_pwr;
+ return JUCIE_TRUE;
+}
+
+static uint8_t servo_get_max_pwr_value(manipulator_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo);
+ return ptr_servo->ctl.cur_pwr;
+}
+
+
+static uint8_t servo_calculate_real_time_dir(manipulator_servo_t *ptr_servo)
+{
+ APP_ASSERT(ptr_servo);  
+}
+static uint8_t is_servo_pwr_update(manipulator_servo_t *ptr_servo,uint8_t pwr)
+{
+ uint8_t ret=JUICE_FALSE;
+ APP_ASSERT(ptr_servo); 
+ if(pwr>=ptr_servo->ctl.max_pwr && ptr_servo->ctl.cur_pwr<=ptr_servo->ctl.max_pwr)
+ ret=JUICE_TRUE;
+ else if((ptr_servo->ctl.cur_pwr > pwr?ptr_servo->ctl.cur_pwr-pwr:pwr-ptr_servo->ctl.cur_pwr)>= ptr_servo->ctl.pwr_step)
+ ret=JUICE_TRUE; 
+ 
+ return ret;
+}
+
+static uint8_t servo_update_pwr(manipulator_servo_t *ptr_servo)
+{
+ uint8_t  pwr,cur_pwr,max_pwr;
+ uint32_t cur_pwr_value;
+ APP_ASSERT(ptr_servo);
+ pwr=servo_calculate_real_time_pwr(ptr_servo);
+ if(is_servo_pwr_update(ptr_servo,pwr)==JUICE_TRUE)
+ {
+   servo_set_cur_pwr(ptr_servo,pwr);
+   APP_LOG_INFO("更新功率：%d.\r\n",pwr);
+   max_pwr=servo_get_max_pwr(ptr_servo);
+   cur_pwr_value=servo_get_max_pwr_value*cur/100;
+   ptr_servo->motor.driver.pwr_value(cur_pwr_value);
+ }
+ return JUICE_TRUE;
+}
+ 
+static uint8_t manipulator_assistant_detect_reset_pos(manipulator_t *ptr_manipulator)
+{
+  APP_ASSERT(ptr_manipulator);
+  servo_detect_reset_pos(&ptr_manipulator->vertical_servo);                          
+  servo_detect_reset_pos(&ptr_manipulator->vertical_servo);
+  return JUICE_TRUE;
+}
 
 static void manipulator_assistant_task(void const * argument)
 {
  manipulator_t *ptr_manipulator;
  while(1)
  {
-   
- if(
- if(is_motor_active(&ptr_manipulator->vertical_servo.motor)==JUICE_TRUE)
- {
-  if(is_
-   
-   servo_calculate_real_time_velocity
+   manipulator_assistant_detect_reset_pos(ptr_manipulator);
+
+
    
    
  } 
    
  }
-  
-}
+ 
 
 
 

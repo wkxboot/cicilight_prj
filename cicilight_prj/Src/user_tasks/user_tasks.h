@@ -324,17 +324,19 @@ typedef struct
   uint32_t acceleration_cnt;
   uint32_t deceleration_cnt;
   uint32_t run_time;
-}process_ctl_t;
+}acc_dec_ctl_t;
 
 typedef struct
 {
  uint8_t          active;
  uint8_t          arrive;//是否到达
+ uint8_t          normal_pwr;
+ uint8_t          show_pwr;
  uint32_t         run_time;
- reset_sensor_t   micro_switch;
+ reset_sensor_t   reset_ms;//复位微动开关
  motor_t          motor;
  rotary_encoder_t encoder;
- process_ctl_t    ctl;
+ acc_dec_ctl_t    ctl;
 }manipulator_servo_t;
 
 typedef struct
