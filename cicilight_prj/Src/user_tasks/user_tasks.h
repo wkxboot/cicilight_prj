@@ -335,7 +335,7 @@ typedef struct
   uint32_t acceleration_cnt;
   uint32_t deceleration_cnt;
   uint32_t start_time;
-}pwr_ctl_t;/*输出功率控制*/
+}process_ctl_t;/*输出功率控制*/
 
 typedef struct
 {
@@ -348,7 +348,7 @@ typedef struct
  reset_sensor_t   reset_ms;//复位微动开关
  motor_t          motor;
  rotary_encoder_t encoder;
- pwr_ctl_t        motor_pwr;
+ process_ctl_t    motor_ctl;
  monitor_t        motor_v;/*马达速度监视*/
 }manipulator_servo_t;
 
