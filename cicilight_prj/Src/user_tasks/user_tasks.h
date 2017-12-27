@@ -119,9 +119,13 @@
 #define  FAULT_CODE_PRESSER_PRESS_TIMEOUT                0xB7
 #define  FAULT_CODE_PRESSER_UNPRESS_TIMEOUT              0xB8
 
-#define  FAULT_CODE_INTERNAL_ERR                         0xB9
-#define  FAULT_CODE_COLUMN_STEP_MOTOR_FAULT              0xBA
-#define  FAULT_CODE_MANIPULATOR_TIMEOUT                  0xBB
+#define  FAULT_CODE_M_INTERNAL_ERR                         0xB9
+#define  FAULT_CODE_M_VERTICAL_MOTOR_STALL                 0xBA
+#define  FAULT_CODE_M_VERTICAL_MOTOR_OC                    0xBB
+#define  FAULT_CODE_M_HORIZONTAL_MOTOR_STALL               0xBC
+#define  FAULT_CODE_M_HORIZONTAL_MOTOR_OC                  0xBD
+#define  FAULT_CODE_MANIPULATOR_TIMEOUT                    0xBE
+
 
 #define  FAULT_CODE_CUP_NOT_EXIST                        0xBC
 #define  FAULT_CODE_CUP_NOT_TAKE_AWAY                    0xBD
@@ -214,9 +218,24 @@ typedef struct
 
 typedef struct
 {
+ uint8_t  active;
+ uint16_t delay;//监视延时
+ uint16_t interval;/*监视最小间隔*/
+ uint16_t warning_min;/*预警最小值*/
+ uint16_t warning_max;/*预警最大值*/
+ uint16_t cur;/*当前值*/
+ uint16_t unit;/*计算单位*/
+ uint32_t last_sample;/*上次采样值*/
+ uint32_t last_time;/*上次采样时间*/
+}monitor_t;
+
+
+
+typedef struct
+{
  uint8_t        active;
  uint8_t        dir;
- uint32_t       run_time;
+ uint32_t       start_time;/*启动时间*/
  motor_driver_t driver;
 }motor_t;//电机状态
 
@@ -234,7 +253,7 @@ typedef struct
 {
  uint8_t         active;
  int32_t         value;//传感器值
- uint32_t        hold_on_time;//当前值保持时间
+ uint32_t        start_time;//当前值开始时间
  sensor_driver_t driver;
 }sensor_t;//传感器
 
@@ -244,7 +263,6 @@ typedef struct
  uint8_t  valid;
  uint8_t  valid_value;
  uint8_t  min_hold_time;//有效最小保持时间
- uint32_t last_time_update;//上次更新时间
  sensor_t sensor;
 }reset_sensor_t;
 
@@ -259,23 +277,14 @@ typedef struct
  uint8_t sensor_state;
  uint8_t sensor_valid_time;
  uint16_t sensor_hold_on_time;
- uint8_t detect;
+ uint8_t  detect;
  uint16_t detect_timeout;
  uint32_t run_time;
 }object_state_t;
 
 typedef struct
 {
-  union 
-  {
-  uint32_t sys;
-  struct __cup
-  {
-  uint32_t cup_top;
-  uint32_t cup_lift_up;
-  uint32_t cup_bot;
-  };
-  }vertical;
+  uint32_t vertical;
   uint32_t horizontal;
 }point_t;//坐标点对应的计数值
 
@@ -284,12 +293,14 @@ typedef struct
 
 typedef struct
 {
-  point_t array[VERTICAL_CNT][HORIZONTAL_CNT];
+  point_t top_array[VERTICAL_CNT][HORIZONTAL_CNT];
+  point_t bot_array[VERTICAL_CNT][HORIZONTAL_CNT];
+  point_t liftup_array[VERTICAL_CNT][HORIZONTAL_CNT];
   point_t reset;
   point_t juicing;
   point_t slot;
   point_t standby;
-}coordinate_t;
+}juice_pos_t;
 
 typedef struct
 {
@@ -323,8 +334,8 @@ typedef struct
   
   uint32_t acceleration_cnt;
   uint32_t deceleration_cnt;
-  uint32_t run_time;
-}acc_dec_ctl_t;
+  uint32_t start_time;
+}pwr_ctl_t;/*输出功率控制*/
 
 typedef struct
 {
@@ -332,18 +343,20 @@ typedef struct
  uint8_t          arrive;//是否到达
  uint8_t          normal_pwr;
  uint8_t          show_pwr;
- uint32_t         run_time;
+           
+ uint32_t         start_time;
  reset_sensor_t   reset_ms;//复位微动开关
  motor_t          motor;
  rotary_encoder_t encoder;
- acc_dec_ctl_t    ctl;
+ pwr_ctl_t        motor_pwr;
+ monitor_t        motor_v;/*马达速度监视*/
 }manipulator_servo_t;
 
 typedef struct
 {
   manipulator_servo_t vertical_servo;
   manipulator_servo_t horizontal_servo;
-  coordinate_t       juice_pos;
+  juice_pos_t        juice_pos;
   uint8_t            active;
   uint8_t            expect_arrives;//期望的到达
 }manipulator_t;
