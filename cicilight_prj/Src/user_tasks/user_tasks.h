@@ -98,6 +98,7 @@
 #define  PRESSER_REACH_BOT_POS_OK_SIGNAL                 (1<<10)
 #define  PRESSER_REACH_BOT_POS_ERR_SIGNAL                (1<<11)
 #define  JUICE_TIME_OK_SIGNAL                            (1<<12)
+#define  MANIPULATOR_RESET_OK_SIGNAL                     (1<<13)
 #define  SYNC_ALL_SIGNALS                                (0xFFFF)
 
 /*进度码*/
@@ -343,23 +344,23 @@ typedef struct
  uint8_t          arrive;//是否到达
  uint8_t          normal_pwr;
  uint8_t          show_pwr;
-           
+ uint8_t          id;          
  uint32_t         start_time;
  reset_sensor_t   reset_ms;//复位微动开关
  motor_t          motor;
  rotary_encoder_t encoder;
  process_ctl_t    motor_ctl;
  monitor_t        motor_v;/*马达速度监视*/
-}manipulator_servo_t;
+}slideway_servo_t;
 
 typedef struct
 {
-  manipulator_servo_t vertical_servo;
-  manipulator_servo_t horizontal_servo;
+  slideway_servo_t   vertical_servo;
+  slideway_servo_t   horizontal_servo;
   juice_pos_t        juice_pos;
   uint8_t            active;
   uint8_t            expect_arrives;//期望的到达
-}manipulator_t;
+}slideway_t;
 
 typedef struct //任务内部消息结构
 {

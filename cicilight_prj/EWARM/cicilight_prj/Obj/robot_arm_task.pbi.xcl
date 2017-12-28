@@ -1,4 +1,4 @@
-"D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Src\user_tasks\rgb_led.c"
+"D:\development\st\stm32\src_code\cicilight_prj\cicilight_prj\Src\user_tasks\robot_arm_task.c"
 -std=c11
 -ferror-limit=0
 -I
