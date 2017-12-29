@@ -18,28 +18,67 @@ extern osMessageQId sync_msg_queue_hdl;
 extern osMessageQId slideway_msg_queue_hdl;
 extern uint8_t juice_set_fault_code(uint8_t err_code);
 extern uint8_t juice_get_fault_code();
+
+
 static void slideway_param_init(slideway_t *ptr_slideway)
 {
-ptr_slideway
+juice_pos_t *ptr_pos=&ptr_slideway->juice_pos;
+/*位置参数*/
+for(uint8_t i=0;i<VERTICAL_CNT;i++)
+{
+  for(uint8_t j=0;j<HORIZONTAL_CNT;j++)
+  {
+  /*初始化抓杯时停靠点坐标*/
+  ptr_pos->top_array[i][j].vertical=VERTICAL_ENCODER_BASE_PULSES+(VERTICAL_CUP_BASE_MM+i*VERTICAL_CUP_CLEARANCE_MM+VERTICAL_DOCKSITE_CLEARANCE_MM)*VERTICAL_ENCODER_PULSES_PER_MM;
+  ptr_pos->top_array[i][j].horizontal=HORIZONTAL_ENCODER_BASE_PULSES+(HORIZONTAL_ENCODER_RESOLUTION/HORIZONTAL_CUP_CNT)*j+(j==HORIZONTAL_CNT-1?2:0);
+  /*初始化抓杯时停下降坐标*/
+  ptr_pos->bot_array[i][j].vertical=ptr_pos->top_array[i][j].vertical -VERTICAL_PUT_DWN_MM*VERTICAL_ENCODER_PULSES_PER_MM;
+  ptr_pos->bot_array[i][j].horizontal=ptr_pos->top_array[i][j].horizontal;
+  /*初始化抓杯时停提升坐标*/
+  ptr_pos->liftup_array[i][j].vertical=ptr_pos->bot_array[i][j].vertical+VERTICAL_LIFT_UP_MM*VERTICAL_ENCODER_PULSES_PER_MM;
+  ptr_pos->liftup_array[i][j].horizontal=ptr_pos->top_array[i][j].horizontal;
+  }
+}
+ ptr_pos->juicing.vertical=VERTICAL_ENCODER_BASE_PULSES+VERTICAL_JUICING_MM*VERTICAL_ENCODER_PULSES_PER_MM;
+ ptr_pos->juicing.horizontal=HORIZONTAL_ENCODER_BASE_PULSES+HORIZONTAL_JUICING_MM*HORIZONTAL_ENCODER_PULSES_PER_MM;
 
+ ptr_pos->slot.vertical=VERTICAL_ENCODER_BASE_PULSES+VERTICAL_SLOT_MM*VERTICAL_ENCODER_PULSES_PER_MM;
+ ptr_pos->slot.horizontal=HORIZONTAL_ENCODER_BASE_PULSES+HORIZONTAL_SLOT_MM*HORIZONTAL_ENCODER_PULSES_PER_MM;
 
+ ptr_pos->standby.vertical=VERTICAL_ENCODER_BASE_PULSES+VERTICAL_STANDBY_MM*VERTICAL_ENCODER_PULSES_PER_MM;
+ ptr_pos->standby.horizontal=HORIZONTAL_ENCODER_BASE_PULSES+HORIZONTAL_STANDBY_MM*HORIZONTAL_ENCODER_PULSES_PER_MM;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ ptr_pos->reset.vertical=VERTICAL_ENCODER_BASE_PULSES+VERTICAL_RESET_MM*VERTICAL_ENCODER_PULSES_PER_MM-VERTICAL_RESET_PULSES;
+ ptr_pos->reset.horizontal=HORIZONTAL_ENCODER_BASE_PULSES+HORIZONTAL_RESET_MM*HORIZONTAL_ENCODER_PULSES_PER_MM-HORIZONTAL_RESET_PULSES;
+/*其他参数*/
+ ptr_slideway->active=JUICE_FALSE;
+ ptr_slideway->expect_arrives=0;
+ 
+ ptr_slideway->vertical_servo.active=JUICE_FALSE;
+ ptr_slideway->vertical_servo.arrive=JUICE_FALSE;
+ ptr_slideway->vertical_servo.normal_pwr=VERTICAL_SERVO_NORMAL_PWR;
+ ptr_slideway->vertical_servo.show_pwr=VERTICAL_SERVO_SHOW_PWR;
+ ptr_slideway->vertical_servo.encoder.cur=VERTICAL_ENCODER_BASE_PULSES;
+ ptr_slideway->vertical_servo.encoder.dir=NULL_DIR;
+ ptr_slideway->vertical_servo.encoder.resolution=VERTICAL_ENCODER_RESOLUTION;
+ ptr_slideway->vertical_servo.id=VERTICAL_SERVO_ID;
+ ptr_slideway->vertical_servo.motor.active=JUICE_TRUE;
+ ptr_slideway->vertical_servo.motor.dir=NULL_DIR;
+ ptr_slideway->vertical_servo.motor_ctl.active=JUICE_TRUE;
+ ptr_slideway->vertical_servo.motor_ctl.acceleration_cnt=VERTICAL_SERVO_ACCELERATION_PULSES_CNT;
+ ptr_slideway->vertical_servo.motor_ctl.deceleration_cnt=VERTICAL_SERVO_DECELERATION_PULSES_CNT;
+ ptr_slideway->vertical_servo.motor_ctl.tolerance=VERTICAL_SERVO_TOLERANCE_PULSES;
+ ptr_slideway->vertical_servo.motor_ctl.max_pwr_value=VERTICAL_SERVO_MAX_VALUE;
+ ptr_slideway->vertical_servo.motor_ctl.pwr_step=VERTICAL_SERVO_PWR_STEP;
+ ptr_slideway->vertical_servo.motor_ctl.start=VERTICAL_ENCODER_BASE_PULSES;
+ ptr_slideway->vertical_servo.motor_ctl.tar=VERTICAL_ENCODER_BASE_PULSES;
+ ptr_slideway->vertical_servo.motor_ctl.stop=VERTICAL_ENCODER_BASE_PULSES;
+ ptr_slideway->vertical_servo.motor_ctl.max_pwr=ptr_slideway->vertical_servo.normal_pwr;
+ ptr_slideway->vertical_servo.motor_v.active=JUICE_FALSE;
+ ptr_slideway->vertical_servo.motor_v.delay=VERTICAL_SERVO_MONITOR_DELAY;
+ ptr_slideway->vertical_servo.motor_v.unit= VERTICAL_SERVO_MONITOR_UNIT;
+ ptr_slideway->vertical_servo.motor_v.warning_max=VERTICAL_SERVO_MONITOR_MAX_WARNING;
+ ptr_slideway->vertical_servo.motor_v.warning_min=VERTICAL_SERVO_MONITOR_MIN_WARNING;
 }
 
 

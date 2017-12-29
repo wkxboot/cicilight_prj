@@ -138,11 +138,11 @@ static uint8_t servo_calculate_real_time_pwr_dir(slideway_servo_t *ptr_servo)
  if(ptr_servo->motor.active==JUICE_TRUE)
  {
   /*到达误差范围内*/
-   if(ptr_servo->motor.dir!=NULL_DIR && IS_SERVO_POS_EQUIVALENT(ptr_servo->encoder.cur,ptr_servo->motor_ctl.stop))
+   if(ptr_servo->motor.dir!=NULL_DIR && IS_SERVO_POS_EQUIVALENT(ptr_servo,ptr_servo->encoder.cur,ptr_servo->motor_ctl.stop))
    {
    servo_pwr_dwn(ptr_servo);
    }
-   if(!IS_SERVO_POS_EQUIVALENT(ptr_servo->encoder.cur,ptr_servo->motor_ctl.stop))/*如果在停车后，当前实时位置与停止点不一致，则再次启动*/
+   if(!IS_SERVO_POS_EQUIVALENT(ptr_servo,ptr_servo->encoder.cur,ptr_servo->motor_ctl.stop))/*如果在停车后，当前实时位置与停止点不一致，则再次启动*/
    {
    if(ptr_servo->encoder.cur<ptr_servo->motor_ctl.stop)
    {
