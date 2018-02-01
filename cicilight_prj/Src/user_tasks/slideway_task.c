@@ -31,10 +31,10 @@ for(uint8_t i=0;i<VERTICAL_CNT;i++)
   /*初始化抓杯时停靠点坐标*/
   ptr_pos->top_array[i][j].vertical=VERTICAL_ENCODER_BASE_PULSES+(VERTICAL_CUP_BASE_MM+i*VERTICAL_CUP_CLEARANCE_MM+VERTICAL_DOCKSITE_CLEARANCE_MM)*VERTICAL_ENCODER_PULSES_PER_MM;
   ptr_pos->top_array[i][j].horizontal=HORIZONTAL_ENCODER_BASE_PULSES+(HORIZONTAL_ENCODER_RESOLUTION/HORIZONTAL_CUP_CNT)*j+(j==HORIZONTAL_CNT-1?2:0);
-  /*初始化抓杯时停下降坐标*/
+  /*初始化抓杯时下降坐标*/
   ptr_pos->bot_array[i][j].vertical=ptr_pos->top_array[i][j].vertical -VERTICAL_PUT_DWN_MM*VERTICAL_ENCODER_PULSES_PER_MM;
   ptr_pos->bot_array[i][j].horizontal=ptr_pos->top_array[i][j].horizontal;
-  /*初始化抓杯时停提升坐标*/
+  /*初始化抓杯时提升坐标*/
   ptr_pos->liftup_array[i][j].vertical=ptr_pos->bot_array[i][j].vertical+VERTICAL_LIFT_UP_MM*VERTICAL_ENCODER_PULSES_PER_MM;
   ptr_pos->liftup_array[i][j].horizontal=ptr_pos->top_array[i][j].horizontal;
   }
