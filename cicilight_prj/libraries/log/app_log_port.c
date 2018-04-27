@@ -1,4 +1,5 @@
 #include "cmsis_os.h"
+#include "app_util.h"
 #if APP_LOG_USE_UART > 0
 #include "uart.h"
 #endif

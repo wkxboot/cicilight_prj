@@ -53,7 +53,7 @@ static __INLINE void app_error_log(uint32_t id, uint32_t pc, uint32_t info)
     }
 }
 
-__WEAK void app_assert_handler(uint16_t line_num, const uint8_t * file_name)
+__weak void app_assert_handler(uint16_t line_num, const uint8_t * file_name)
 {
     assert_info_t assert_info =
     {
@@ -70,7 +70,7 @@ __WEAK void app_assert_handler(uint16_t line_num, const uint8_t * file_name)
  * Function is implemented as weak so that it can be overwritten by custom application error handler
  * when needed.
  */
-__WEAK void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
+__weak void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 {
     APP_LOG_ERROR("Fatal!\r\n");
     // On assert, the system can only recover with a reset.

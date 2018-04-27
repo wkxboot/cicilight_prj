@@ -1,6 +1,6 @@
 #include "spi.h"
-
 #include "cmsis_os.h"
+#include "juice_common.h"
 #include "drv8711.h"
 #include "JJDK_ZK_GZ1.h"
 #define APP_LOG_MODULE_NAME   "[drv8711]"

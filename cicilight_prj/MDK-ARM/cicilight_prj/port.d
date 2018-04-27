@@ -1,0 +1,13 @@
+cicilight_prj\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3/port.c
+cicilight_prj\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
+cicilight_prj\port.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+cicilight_prj\port.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+cicilight_prj\port.o: ../Inc/FreeRTOSConfig.h
+cicilight_prj\port.o: ../Inc/main.h
+cicilight_prj\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
+cicilight_prj\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
+cicilight_prj\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
+cicilight_prj\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3/portmacro.h
+cicilight_prj\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+cicilight_prj\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h
+cicilight_prj\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h

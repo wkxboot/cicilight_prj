@@ -1,0 +1,10 @@
+cicilight_prj\segger_rtt_syscalls_keil.o: ..\libraries\SEGGER_RTT_V612j\Syscalls\SEGGER_RTT_Syscalls_KEIL.c
+cicilight_prj\segger_rtt_syscalls_keil.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+cicilight_prj\segger_rtt_syscalls_keil.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+cicilight_prj\segger_rtt_syscalls_keil.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+cicilight_prj\segger_rtt_syscalls_keil.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\rt_sys.h
+cicilight_prj\segger_rtt_syscalls_keil.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\rt_misc.h
+cicilight_prj\segger_rtt_syscalls_keil.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+cicilight_prj\segger_rtt_syscalls_keil.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+cicilight_prj\segger_rtt_syscalls_keil.o: ../libraries/SEGGER_RTT_V612j/RTT/SEGGER_RTT.h
+cicilight_prj\segger_rtt_syscalls_keil.o: ../libraries/SEGGER_RTT_V612j/RTT/SEGGER_RTT_Conf.h
